@@ -77,13 +77,14 @@ namespace CivilFX.TrafficECS
             }
         }
 
-        struct AssembleVehicleJob : IJob
+        struct AssembleVehicleJob : IJobParallelFor
         {
-            public EntityCommandBuffer commandBuffer;
+            public EntityCommandBuffer.Concurrent commandBuffer;
             public NativeArray<VehicleBodyMoveAndRotate> bodyComponents;
             public NativeArray<VehicleWheelMoveAndRotate> wheelComponents;
             public NativeArray<Entity> bodyEntites;
             public NativeArray<Entity> wheelEntites;
+            /*
             public void Execute()
             {
 
@@ -105,6 +106,30 @@ namespace CivilFX.TrafficECS
                     }
                 }
             }
+            */
+            public void Execute(int index)
+            {
+                Entity body = Entity.Null;
+                //find body
+                for (int i=0; i<bodyEntites.Length; i++)
+                {
+                    if (bodyComponents[i].id == wheelComponents[index].id)
+                    {
+                        body = bodyEntites[i];
+                        break;
+                    }
+                }
+                if (body.Equals(Entity.Null))
+                {
+                    Debug.LogError("Failed to assemble vehicle");
+                    return;
+                }
+
+                //set components
+                commandBuffer.AddComponent(index, wheelEntites[index], new Parent { Value = body });
+                commandBuffer.AddComponent(index, wheelEntites[index], new LocalToParent { });
+            }
+
         }
         
 
@@ -144,13 +169,13 @@ namespace CivilFX.TrafficECS
 
                 var assembleJob = new AssembleVehicleJob
                 {
-                    commandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer(),
+                    commandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
                     bodyComponents = _bodyComponents,
                     bodyEntites = _bodyEntities,
                     wheelComponents = _wheelComponents,
                     wheelEntites = _wheelEntities
 
-                }.Schedule();
+                }.Schedule(_wheelComponents.Length, 64);
                 assembleJob.Complete();
                 _bodyComponents.Dispose();
                 _bodyEntities.Dispose();

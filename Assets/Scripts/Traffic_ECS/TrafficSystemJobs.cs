@@ -57,7 +57,7 @@ namespace CivilFX.TrafficECS {
                 if (frontPos >= currentPath.nodesCount)
                 {
                     //this vehicle is at the end of this path
-
+                    vehicle.speed = 0;
                     return;
                 }
 
@@ -143,6 +143,7 @@ namespace CivilFX.TrafficECS {
                 //set location
                 commandBuffer.SetComponent(index, entity, new Translation { Value = vehicle.location });
 
+                //add info to hashmap
                 map.Add(vehicle.currentPathID, new VehiclePosition { pos = vehicle.currentPos, length = vehicle.length });
 
                 //set rotation
@@ -153,18 +154,16 @@ namespace CivilFX.TrafficECS {
             }
         }
 
+        //job to rotate wheels
+        //location will be handled by unity built-in system
         public struct MoveVehicleWheelJob : IJobForEachWithEntity<VehicleWheelMoveAndRotate, Rotation>
         {
+            public float deltaTime;
             public EntityCommandBuffer.Concurrent commandBuffer;
             [ReadOnly] public NativeArray<VehicleBodyMoveAndRotate> bodies;
             public void Execute(Entity entity, int index, ref VehicleWheelMoveAndRotate wheel, ref Rotation rotation)
             {
-                
-                VehicleBodyMoveAndRotate body;
-                body.location = float3.zero;
-                body.lookAtLocation = float3.zero;
-                body.rotation = quaternion.identity;
-
+                VehicleBodyMoveAndRotate body = VehicleBodyMoveAndRotate.Null;
 
                 for (int i=0; i<bodies.Length; i++)
                 {
@@ -174,6 +173,15 @@ namespace CivilFX.TrafficECS {
                         break;
                     }
                 }
+
+                //safety check
+                if (body.Equals(VehicleBodyMoveAndRotate.Null))
+                {
+                    Debug.LogError("Failed to rotate wheel");
+                    return;
+                }
+
+                rotation.Value = math.mul(math.normalize(rotation.Value), quaternion.AxisAngle(new float3 (0,0,1), body.speed * deltaTime));
 
                 /*
                 //set location

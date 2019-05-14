@@ -83,6 +83,7 @@ namespace CivilFX.TrafficECS
             //schedule move wheel job
             JobHandle moveVehicleWheelJob = new MoveVehicleWheelJob
             {
+                deltaTime = Time.deltaTime,
                 commandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
                 bodies = vehicleBodies,
             }.Schedule(this, moveVehicleJob);
