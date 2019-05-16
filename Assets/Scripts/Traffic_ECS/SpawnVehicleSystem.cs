@@ -12,6 +12,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 using Unity.Collections;
+using Unity.Rendering;
 
 namespace CivilFX.TrafficECS
 {
@@ -80,10 +81,10 @@ namespace CivilFX.TrafficECS
         struct AssembleVehicleJob : IJobParallelFor
         {
             public EntityCommandBuffer.Concurrent commandBuffer;
-            public NativeArray<VehicleBodyMoveAndRotate> bodyComponents;
-            public NativeArray<VehicleWheelMoveAndRotate> wheelComponents;
-            public NativeArray<Entity> bodyEntites;
-            public NativeArray<Entity> wheelEntites;
+            [ReadOnly] public NativeArray<VehicleBodyMoveAndRotate> bodyComponents;
+            [ReadOnly] public NativeArray<VehicleWheelMoveAndRotate> wheelComponents;
+            [ReadOnly] public NativeArray<Entity> bodyEntites;
+            [ReadOnly] public NativeArray<Entity> wheelEntites;
             /*
             public void Execute()
             {
@@ -111,7 +112,7 @@ namespace CivilFX.TrafficECS
             {
                 Entity body = Entity.Null;
                 //find body
-                for (int i=0; i<bodyEntites.Length; i++)
+                for (int i=0; i< bodyComponents.Length; i++)
                 {
                     if (bodyComponents[i].id == wheelComponents[index].id)
                     {
@@ -145,12 +146,12 @@ namespace CivilFX.TrafficECS
                 spawnVehicleBodyJob = new SpawnVehicleBodyJob
                 {
                     commandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
-                }.ScheduleSingle(this, inputDeps);
+                }.Schedule(this, inputDeps);
 
                 spawnVehicleWheelJob = new SpawnVehicleWheelJob
                 {
                     commandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
-                }.ScheduleSingle(this, inputDeps);
+                }.Schedule(this, inputDeps);
 
                 m_EntityCommandBufferSystem.AddJobHandleForProducer(spawnVehicleBodyJob);
                 m_EntityCommandBufferSystem.AddJobHandleForProducer(spawnVehicleWheelJob);

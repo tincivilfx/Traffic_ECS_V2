@@ -21,6 +21,7 @@ namespace CivilFX.TrafficECS
         BeginInitializationEntityCommandBufferSystem m_EntityCommandBufferSystem;
 
         private float delayForStability = 1.0f;
+        private int framesToSkip = 1;
 
         protected override void OnCreateManager()
         {
@@ -60,6 +61,7 @@ namespace CivilFX.TrafficECS
             //schedule resolve next path
             JobHandle resolveNodeJob = new GetVehicleBodyPositionJob
             {
+                commandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
                 paths = this.paths,
             }.Schedule(this, inputDeps);
 

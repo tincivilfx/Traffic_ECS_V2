@@ -20,6 +20,7 @@ namespace CivilFX.TrafficECS
     public struct VehicleBodyMoveAndRotate : IComponentData
     {
         public static VehicleBodyMoveAndRotate Null { get; }
+        public bool waiting;
         public int length;
         public int speed;
         public int currentPos;

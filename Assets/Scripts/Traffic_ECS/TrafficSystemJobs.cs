@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Entities;
+using Unity.Burst;
 using Unity.Jobs;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -18,20 +19,21 @@ namespace CivilFX.TrafficECS {
             return lowerValue + ((uperValue - lowerValue) / (uperLimit - lowerLimit)) * (value - lowerLimit);
         }
 
-
+        [BurstCompile]
         public struct OnetimePopulateVehicleToPathJob : IJobForEachWithEntity<VehicleBodyMoveAndRotate>
         {
-            public Path path;
+            [ReadOnly] public Path path;
             public void Execute(Entity entity, int index, ref VehicleBodyMoveAndRotate vehicle)
             {
                 vehicle.currentPathID = path.id;
-                vehicle.currentPos = index * vehicle.length * 2;
-                Debug.Log(index + ":::" + vehicle.currentPos);
+                vehicle.currentPos = vehicle.id * vehicle.length * 2;
+                //Debug.Log(index + ":::" + vehicle.currentPos);
             }
         }
 
         public struct GetVehicleBodyPositionJob : IJobForEachWithEntity<VehicleBodyMoveAndRotate>
         {
+            public EntityCommandBuffer.Concurrent commandBuffer;
             [ReadOnly] public NativeArray<Path> paths;
             public unsafe void Execute(Entity entity, int index, ref VehicleBodyMoveAndRotate vehicle)
             {
@@ -58,6 +60,12 @@ namespace CivilFX.TrafficECS {
                 {
                     //this vehicle is at the end of this path
                     vehicle.speed = 0;
+
+                    /*
+                    //hiding this vehicle
+                    vehicle.waiting = true;
+                    commandBuffer.AddComponent(index, entity, new Frozen { });
+                    */
                     return;
                 }
 
@@ -90,11 +98,11 @@ namespace CivilFX.TrafficECS {
             }
         }
 
-
         //Job to clear out all occupancy
+        [BurstCompile]
         public struct ClearPathsOccupancyJob : IJobForEachWithEntity<Path>
         {
-            public void Execute(Entity entity, int index, ref Path path)
+            public void Execute(Entity entity, int index, [WriteOnly] ref Path path)
             {
                 for (int i=0; i< path.nodesCount; i++)
                 {
@@ -103,6 +111,7 @@ namespace CivilFX.TrafficECS {
             }
         }
 
+        [BurstCompile]
         public struct FillPathsOccupancyJob : IJobForEachWithEntity<Path>
         {
             [ReadOnly] public NativeMultiHashMap<int, VehiclePosition> map;
@@ -133,6 +142,8 @@ namespace CivilFX.TrafficECS {
             }
         }
 
+
+        //TODO: set location value here instead of waiting for main thread
         //Job to move vehicle
         public struct MoveVehicleBodyJob : IJobForEachWithEntity<VehicleBodyMoveAndRotate, Rotation>
         {
@@ -140,6 +151,10 @@ namespace CivilFX.TrafficECS {
             [WriteOnly] public NativeMultiHashMap<int, VehiclePosition>.Concurrent map;
             public void Execute(Entity entity, int index, ref VehicleBodyMoveAndRotate vehicle, ref Rotation rotation)
             {
+                if (vehicle.waiting)
+                {
+                    return;
+                }
                 //set location
                 commandBuffer.SetComponent(index, entity, new Translation { Value = vehicle.location });
 
@@ -148,8 +163,7 @@ namespace CivilFX.TrafficECS {
 
                 //set rotation
                 var rot = quaternion.LookRotation(vehicle.lookAtLocation - vehicle.location, new float3(0, 1, 0));
-                vehicle.rotation = rot;
-                    
+                vehicle.rotation = rot;                  
                 commandBuffer.SetComponent(index, entity, new Rotation { Value = rot });
             }
         }
@@ -163,6 +177,7 @@ namespace CivilFX.TrafficECS {
             [ReadOnly] public NativeArray<VehicleBodyMoveAndRotate> bodies;
             public void Execute(Entity entity, int index, ref VehicleWheelMoveAndRotate wheel, ref Rotation rotation)
             {
+
                 VehicleBodyMoveAndRotate body = VehicleBodyMoveAndRotate.Null;
 
                 for (int i=0; i<bodies.Length; i++)
@@ -174,37 +189,22 @@ namespace CivilFX.TrafficECS {
                     }
                 }
 
+               
+                
                 //safety check
                 if (body.Equals(VehicleBodyMoveAndRotate.Null))
                 {
-                    Debug.LogError("Failed to rotate wheel");
+                    //Debug.LogError("Failed to rotate wheel");
                     return;
                 }
-
-                rotation.Value = math.mul(math.normalize(rotation.Value), quaternion.AxisAngle(new float3 (0,0,1), body.speed * deltaTime));
-
                 /*
-                //set location
-                var a = body.location == float3.zero;
-                if (a.x && a.y && a.z)
+                if (body.waiting)
                 {
-                    Debug.LogError("Failed to obtain body");
+                    commandBuffer.AddComponent(index, entity, new Frozen { });
                     return;
                 }
-
-                commandBuffer.SetComponent(index, entity, new Translation { Value = body.location + wheel.positionOffset});
-                
-                
-                //set rotation
-                var rot = new quaternion(rotation.Value.value.x + body.rotation.value.x,
-                                        rotation.Value.value.y + body.rotation.value.y,
-                                        rotation.Value.value.z + body.rotation.value.z,
-                                        rotation.Value.value.w + body.rotation.value.w);
-
-                rot = quaternion.LookRotation((body.lookAtLocation + wheel.positionOffset) - (body.location + wheel.positionOffset), new float3(0, 1, 0));
-
-                commandBuffer.SetComponent(index, entity, new Rotation { Value = rot });
                 */
+                rotation.Value = math.mul(math.normalize(rotation.Value), quaternion.AxisAngle(new float3 (1,0,0), body.speed * deltaTime));
             }
         }
 
