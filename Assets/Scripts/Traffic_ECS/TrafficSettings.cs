@@ -146,7 +146,7 @@ namespace CivilFX.TrafficECS
                 var pathData = new Path
                 {
                     id = 0,
-                    maxSpeed = 65,
+                    maxSpeed = (byte)path.actualSpeedLimit,
                     nodesCount = path.PathNodes.Count,
                     pathNodes = pathMem.GetPointer(),
                     occupied = occupiedSlotMem.GetPointer()
