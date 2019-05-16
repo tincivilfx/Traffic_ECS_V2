@@ -34,7 +34,8 @@ namespace CivilFX.TrafficECS
             var queries = GetEntityQuery(ComponentType.ReadOnly(typeof(Path)));
             paths = queries.ToComponentDataArray<Path>(Allocator.Persistent);
 
-            //
+
+            //schedule job to populate vehicles to paths
             JobHandle job = new OnetimePopulateVehicleToPathJob
             {
                 path = paths[0],
@@ -47,11 +48,12 @@ namespace CivilFX.TrafficECS
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            if (delayForStability > 0.0f)
+            if (framesToSkip > 0)
             {
-                delayForStability -= Time.deltaTime;
+                framesToSkip--;
                 return inputDeps;
             }
+
             if (!isDoneSetup)
             {
                 isDoneSetup = true;

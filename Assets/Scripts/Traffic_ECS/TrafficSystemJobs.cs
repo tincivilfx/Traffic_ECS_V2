@@ -55,7 +55,6 @@ namespace CivilFX.TrafficECS {
 
                 //resolve next position
                 frontPos = vehicle.currentPos + (vehicle.length / 2);
-
                 if (frontPos >= currentPath.nodesCount)
                 {
                     //this vehicle is at the end of this path
