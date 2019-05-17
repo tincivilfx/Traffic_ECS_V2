@@ -34,19 +34,65 @@ namespace CivilFX.TrafficECS
             var queries = GetEntityQuery(ComponentType.ReadOnly(typeof(Path)));
             paths = queries.ToComponentDataArray<Path>(Allocator.Persistent);
 
+            //calculate location for all vehices to all paths
+            ulong totalNodes = 0;
+            List<float> nodesPercentage = new List<float>();
+            List<int> vehiclesCounts = new List<int>();
+            int currentVehicleCount = 0;
 
+            NativeHashMap<int, VehicleInitData> hashMap = new NativeHashMap<int, VehicleInitData>(1000, Allocator.TempJob);
 
+            //get the total of nodes of all paths
+            for (int i=0; i<paths.Length; i++)
+            {
+                totalNodes += (ulong)paths[i].nodesCount;
+            }
 
+            //get the percentage of vehicles on a single path
+            for (int i= 0; i<paths.Length; i++)
+            {
+                nodesPercentage.Add(paths[i].nodesCount * 100.0f / totalNodes);
+            }
+
+            //get the vehicles
+            var vehiclesQuery = GetEntityQuery(ComponentType.ReadWrite< VehicleBodyMoveAndRotate >());
+            var vehicles = vehiclesQuery.ToComponentDataArray<VehicleBodyMoveAndRotate>(Allocator.TempJob);
+
+            //calculate the actual number of vehicles on a single path base on the percentage
+            for (int i = 0; i < paths.Length; i++)
+            {
+                vehiclesCounts.Add(Mathf.CeilToInt(nodesPercentage[i] * vehicles.Length / 100.0f));
+            }
+            
+            //assign vehicle to each path along with the position
+            for (int i = 0; i < paths.Length; i++)
+            {
+                Debug.Log(vehiclesCounts[i]);
+                for (int j=0; j<vehiclesCounts[i]; j++)
+                {
+                    if (currentVehicleCount >= vehicles.Length)
+                    {
+                        break;
+                    }
+                    var v = vehicles[currentVehicleCount];
+                    v.currentPathID = paths[i].id;
+                    v.currentPos = j * (paths[i].nodesCount / vehiclesCounts[i]);
+                    hashMap.TryAdd(v.id, new VehicleInitData { pathID = paths[i].id, pos = v.currentPos });
+                    currentVehicleCount++;
+                }
+            }
+            vehicles.Dispose();
+            
             //schedule job to populate vehicles to paths
             JobHandle job = new OnetimePopulateVehicleToPathJob
             {
-                path = paths[0],
+                map = hashMap,
             }.Schedule(this, inputDeps);
 
+            job.Complete();
+            hashMap.Dispose();
             return job;
         }
-
-
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
@@ -56,7 +102,7 @@ namespace CivilFX.TrafficECS
                 framesToSkip--;
                 return inputDeps;
             }
-
+            
             if (!isDoneSetup)
             {
                 isDoneSetup = true;

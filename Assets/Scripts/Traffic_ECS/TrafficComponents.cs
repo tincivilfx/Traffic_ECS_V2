@@ -83,6 +83,12 @@ namespace CivilFX.TrafficECS
         public int length;
     }
 
+    public struct VehicleInitData
+    {
+        public byte pathID;
+        public int pos;
+    }
+
     public struct PathLinkedData
     {
         public byte linkedID;

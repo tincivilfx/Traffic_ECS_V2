@@ -43,9 +43,9 @@ namespace CivilFX.TrafficECS
             try
             {
                 ptr = UnsafeUtility.Malloc(size * UnsafeUtility.SizeOf<T>(), alignment, allocator);
-                Debug.Log("Allocate: " + size * UnsafeUtility.SizeOf<T>());
+                //Debug.Log("Allocate: " + size * UnsafeUtility.SizeOf<T>());
             } catch (Exception ex) {
-                Debug.LogError("Failed to allocate memory: " + ex.Message);
+                //Debug.LogError("Failed to allocate memory: " + ex.Message);
             }
         }
 
@@ -128,7 +128,7 @@ namespace CivilFX.TrafficECS
                 {
                     //get current path
                     var currentPath = pathsCollector.bakedTrafficPaths[i];
-                    Debug.Log(currentPath.PathName);
+                    //Debug.Log(currentPath.PathName);
 
                     //create entity
                     var pathEntity = conversionSystem.CreateAdditionalEntity(this);
@@ -285,9 +285,9 @@ namespace CivilFX.TrafficECS
                 heavyVehiclePrefabs.RemoveRange(0, heavyVehiclePrefabs.Count - heavyVehiclesCount);
             }
 
-            Debug.Log(lightVehiclePrefabs.Count);
-            Debug.Log(mediumVehiclePrefabs.Count);
-            Debug.Log(heavyVehiclePrefabs.Count);
+            //Debug.Log(lightVehiclePrefabs.Count);
+            //Debug.Log(mediumVehiclePrefabs.Count);
+            //Debug.Log(heavyVehiclePrefabs.Count);
 
 
             objs.AddRange(lightVehiclePrefabs);

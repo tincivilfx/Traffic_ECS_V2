@@ -74,15 +74,19 @@ namespace CivilFX.TrafficECS {
 
 
 
+        //job to place all the vehicles on all the paths when starting up
         [BurstCompile]
         public struct OnetimePopulateVehicleToPathJob : IJobForEachWithEntity<VehicleBodyMoveAndRotate>
         {
-            [ReadOnly] public Path path;
+            [ReadOnly] public NativeHashMap<int, VehicleInitData> map;
             public void Execute(Entity entity, int index, ref VehicleBodyMoveAndRotate vehicle)
             {
-                vehicle.currentPathID = path.id;
-                vehicle.currentPos = vehicle.id * vehicle.length * 2;
-                //Debug.Log(index + ":::" + vehicle.currentPos);
+                if (map.TryGetValue(vehicle.id, out VehicleInitData data))
+                {
+                    vehicle.currentPathID = data.pathID;
+                    vehicle.currentPos = data.pos;
+                }
+
             }
         }
 
