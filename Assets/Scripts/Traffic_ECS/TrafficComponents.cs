@@ -28,8 +28,6 @@ namespace CivilFX.TrafficECS
         public int currentPathID;
         public float3 location;     //used for wheels
         public float3 lookAtLocation;
-        public quaternion rotation;
-
     }
 
     public struct VehicleWheelMoveAndRotate : IComponentData

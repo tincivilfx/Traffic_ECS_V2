@@ -76,126 +76,162 @@ namespace CivilFX.TrafficECS {
 
         //job to place all the vehicles on all the paths when starting up
         [BurstCompile]
-        public struct OnetimePopulateVehicleToPathJob : IJobForEachWithEntity<VehicleBodyMoveAndRotate>
+        public struct OnetimePopulateVehicleToPathJob : IJobChunk
         {
             [ReadOnly] public NativeHashMap<int, VehicleInitData> map;
-            public void Execute(Entity entity, int index, ref VehicleBodyMoveAndRotate vehicle)
+            public ArchetypeChunkComponentType<VehicleBodyMoveAndRotate> vehicleBodyType;
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
-                if (map.TryGetValue(vehicle.id, out VehicleInitData data))
+                var chunkVehicles = chunk.GetNativeArray(vehicleBodyType);
+
+                for (int i=0; i< chunk.Count; i++)
                 {
-                    vehicle.currentPathID = data.pathID;
-                    vehicle.currentPos = data.pos;
+                    var vehicleData = chunkVehicles[i];
+                    
+                    if (map.TryGetValue(vehicleData.id, out VehicleInitData data))
+                    {
+                        vehicleData.currentPathID = data.pathID;
+                        vehicleData.currentPos = data.pos;
+                        chunkVehicles[i] = vehicleData;
+
+                        /*
+                        chunkVehicles[i] = new VehicleBodyMoveAndRotate
+                        {
+                            waiting = vehicleData.waiting,
+                            length = vehicleData.length,
+                            speed = vehicleData.speed,
+                            id = vehicleData.id,
+                            currentPathID = data.pathID,
+                            currentPos = data.pos,
+                            location = vehicleData.location,
+                            lookAtLocation = vehicleData.lookAtLocation
+                        };
+                        */
+                    }
                 }
 
             }
         }
 
-        public struct GetVehicleBodyPositionJob : IJobForEachWithEntity<VehicleBodyMoveAndRotate>
+        [BurstCompile]
+        public struct ResolveNextPositionForVehicleJob : IJobChunk
         {
-            public EntityCommandBuffer.Concurrent commandBuffer;
+            public ArchetypeChunkComponentType<VehicleBodyMoveAndRotate> vehicleBodyType;
             [ReadOnly] public NativeArray<Path> paths;
-            public unsafe void Execute(Entity entity, int index, ref VehicleBodyMoveAndRotate vehicle)
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
-                Path currentPath = new Path { };
+                var chunkVehicles = chunk.GetNativeArray(vehicleBodyType);
 
-                int next = -1;
-                int frontPos;
-                int scanDis = 3000;
-                int currentSpeed;
-
-                //get the current path of this vehicle
-                for (int i=0; i<paths.Length; i++)
+                for (int i = 0; i < chunk.Count; i++)
                 {
-                    if (vehicle.currentPathID == paths[i].id)
+                    var vehicleData = chunkVehicles[i];
+                    Path currentPath = new Path { id = 255 };
+
+                    //get the current path of this vehicle
+                    for (int j = 0; j < paths.Length; j++)
                     {
-                        currentPath = paths[i];
+                        if (vehicleData.currentPathID == paths[j].id)
+                        {
+                            currentPath = paths[j];
+                        }
                     }
-                }
 
-                //resolve next position
-                frontPos = vehicle.currentPos + (vehicle.length / 2);
-                if (frontPos >= currentPath.nodesCount)
-                {
-                    //this vehicle is at the end of this path
-                    vehicle.speed = 0;
-
-                    /*
-                    //hiding this vehicle
-                    vehicle.waiting = true;
-                    commandBuffer.AddComponent(index, entity, new Frozen { });
-                    */
-                    return;
-                }
-
-
-                //check how many nodes can this vehicle move to
-                //i.e. : scan distance
-
-                scanDis = frontPos + scanDis < currentPath.nodesCount ? scanDis : currentPath.nodesCount - frontPos; //rescale scan distance
-
-                next = scanDis;
-                for (int i=1; i< scanDis; i++)
-                {
-                    if (CheckOccupied(currentPath.occupied[frontPos + i], OccupiedType.Vehicle))
+                    //resolve next position
+                    var frontPos = vehicleData.currentPos + (vehicleData.length / 2);
+                    if (frontPos >= currentPath.nodesCount)
                     {
-                        next = i;
-                        break;
+                        //this vehicle is at the end of this path
+                        vehicleData.speed = 0;
+
+                        /*
+                        //hiding this vehicle
+                        vehicle.waiting = true;
+                        commandBuffer.AddComponent(index, entity, new Frozen { });
+                        */
+                        continue;
                     }
-                }
 
-                //map the speed
-                currentSpeed = (int)(Map(next, 0, scanDis, 0, currentPath.maxSpeed));
-                //clamp speed
-                currentSpeed = math.clamp(currentSpeed, 0, currentPath.maxSpeed);
+                    //check how many nodes can this vehicle move to
+                    //i.e. : scan distance
 
-                //set current speed
-                vehicle.speed = currentSpeed;
-                vehicle.currentPos = vehicle.currentPos + currentSpeed;
-                vehicle.location = currentPath.pathNodes[vehicle.currentPos];
-                vehicle.lookAtLocation = vehicle.currentPos < currentPath.nodesCount - currentPath.maxSpeed ? currentPath.pathNodes[vehicle.currentPos + currentPath.maxSpeed] : vehicle.lookAtLocation;
+                    var scanDis = 3000;
+                    scanDis = frontPos + scanDis < currentPath.nodesCount ? scanDis : currentPath.nodesCount - frontPos; //rescale scan distance
+
+                    var next = scanDis;
+                    for (int j = 1; j < scanDis; j++)
+                    {
+                        if (CheckOccupied(currentPath.occupied[frontPos + j], OccupiedType.Vehicle))
+                        {
+                            next = j;
+                            break;
+                        }
+                    }
+
+                    //map the speed
+                    var currentSpeed = (int)(Map(next, 0, scanDis, 0, currentPath.maxSpeed));
+                    //clamp speed
+                    currentSpeed = math.clamp(currentSpeed, 0, currentPath.maxSpeed);
+
+                    //set current speed
+                    vehicleData.speed = currentSpeed;
+                    vehicleData.currentPos = vehicleData.currentPos + currentSpeed;
+                    vehicleData.location = currentPath.pathNodes[vehicleData.currentPos];
+                    vehicleData.lookAtLocation = vehicleData.currentPos < currentPath.nodesCount - currentPath.maxSpeed ? currentPath.pathNodes[vehicleData.currentPos + currentPath.maxSpeed] : vehicleData.lookAtLocation;
+
+                    //assign value back
+                    chunkVehicles[i] = vehicleData;
+                } 
             }
         }
 
         //Job to clear out all occupancy
         [BurstCompile]
-        public struct ClearPathsOccupancyJob : IJobForEachWithEntity<Path>
+        public struct ClearPathsOccupancyJob : IJobChunk
         {
-            public void Execute(Entity entity, int index, [WriteOnly] ref Path path)
+            public ArchetypeChunkComponentType<Path> pathType;
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
-                for (int i=0; i< path.nodesCount; i++)
+                var chunkPath = chunk.GetNativeArray(pathType);
+                for (int i=0; i<chunk.Count; i++)
                 {
-                    path.occupied[i] = 0;
+                    var path = chunkPath[i];
+                    for (int j=0; j<path.nodesCount; j++)
+                    {
+                        path.occupied[j] = 0;
+                    }
                 }
             }
         }
 
         [BurstCompile]
-        public struct FillPathsOccupancyJob : IJobForEachWithEntity<Path>
+        public struct FillPathsOccupancyJob : IJobChunk
         {
+            public ArchetypeChunkComponentType<Path> pathType;
             [ReadOnly] public NativeMultiHashMap<int, VehiclePosition> map;
 
-            public void Execute(Entity entity, int index, ref Path path)
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
-                VehiclePosition fillPosition;
-                NativeMultiHashMapIterator<int> iterator;
-                bool found = map.TryGetFirstValue(path.id, out fillPosition, out iterator);
-                int fillStart = 0;
-                int fillEnd = 0;
-
-                while (found)
+                var chunkPath = chunk.GetNativeArray(pathType);
+                for (int i = 0; i < chunk.Count; i++)
                 {
-                    fillStart = fillPosition.pos - fillPosition.length / 2;
-                    fillStart = fillStart < 0 ? 0 : fillStart;
+                    var path = chunkPath[i];
 
-                    fillEnd = fillPosition.pos + fillPosition.length / 2;
-                    fillEnd = fillEnd >= path.nodesCount ? path.nodesCount : fillEnd;
-
-                    //start fill
-                    for (int i= fillStart; i< fillEnd; i++)
+                    bool found = map.TryGetFirstValue(path.id, out VehiclePosition fillPosition, out NativeMultiHashMapIterator<int> iterator);
+                    while (found)
                     {
-                        path.occupied[i] = SetOccupied(path.occupied[i], true, OccupiedType.Vehicle);
+                        var fillStart = fillPosition.pos - fillPosition.length / 2;
+                        fillStart = fillStart < 0 ? 0 : fillStart;
+
+                        var fillEnd = fillPosition.pos + fillPosition.length / 2;
+                        fillEnd = fillEnd >= path.nodesCount ? path.nodesCount : fillEnd;
+
+                        //start fill
+                        for (int j = fillStart; j < fillEnd; j++)
+                        {
+                            path.occupied[j] = SetOccupied(path.occupied[j], true, OccupiedType.Vehicle);
+                        }
+                        found = map.TryGetNextValue(out fillPosition, ref iterator);
                     }
-                    found = map.TryGetNextValue(out fillPosition, ref iterator);
                 }
             }
         }
@@ -220,8 +256,7 @@ namespace CivilFX.TrafficECS {
                 map.Add(vehicle.currentPathID, new VehiclePosition { pos = vehicle.currentPos, length = vehicle.length });
 
                 //set rotation
-                var rot = quaternion.LookRotation(vehicle.lookAtLocation - vehicle.location, new float3(0, 1, 0));
-                vehicle.rotation = rot;                  
+                var rot = quaternion.LookRotation(vehicle.lookAtLocation - vehicle.location, new float3(0, 1, 0));                
                 commandBuffer.SetComponent(index, entity, new Rotation { Value = rot });
             }
         }

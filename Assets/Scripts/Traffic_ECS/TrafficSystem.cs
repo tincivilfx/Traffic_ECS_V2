@@ -23,6 +23,12 @@ namespace CivilFX.TrafficECS
         private float delayForStability = 1.0f;
         private int framesToSkip = 1;
 
+        #region caches entities
+        EntityQuery pathEntities;
+        EntityQuery vehicleBodidesEntities;
+        EntityQuery vehicleWheelsEntities;
+        #endregion
+
         protected override void OnCreateManager()
         {
             m_EntityCommandBufferSystem = World.GetOrCreateSystem<BeginInitializationEntityCommandBufferSystem>();
@@ -31,8 +37,13 @@ namespace CivilFX.TrafficECS
         private JobHandle OneTimeSetup(JobHandle inputDeps)
         {
             //cache references to paths data
-            var queries = GetEntityQuery(ComponentType.ReadOnly(typeof(Path)));
-            paths = queries.ToComponentDataArray<Path>(Allocator.Persistent);
+            pathEntities = GetEntityQuery(ComponentType.ReadOnly(typeof(Path)));
+            paths = pathEntities.ToComponentDataArray<Path>(Allocator.Persistent);
+
+            //cache entities
+            vehicleBodidesEntities = GetEntityQuery(typeof(VehicleBodyMoveAndRotate));
+            vehicleWheelsEntities = GetEntityQuery(typeof(VehicleWheelMoveAndRotate));
+
 
             //calculate location for all vehices to all paths
             ulong totalNodes = 0;
@@ -55,8 +66,7 @@ namespace CivilFX.TrafficECS
             }
 
             //get the vehicles
-            var vehiclesQuery = GetEntityQuery(ComponentType.ReadWrite< VehicleBodyMoveAndRotate >());
-            var vehicles = vehiclesQuery.ToComponentDataArray<VehicleBodyMoveAndRotate>(Allocator.TempJob);
+            var vehicles = vehicleBodidesEntities.ToComponentDataArray<VehicleBodyMoveAndRotate>(Allocator.TempJob);
 
             //calculate the actual number of vehicles on a single path base on the percentage
             for (int i = 0; i < paths.Length; i++)
@@ -82,12 +92,14 @@ namespace CivilFX.TrafficECS
                 }
             }
             vehicles.Dispose();
-            
+
+            var bodyType = GetArchetypeChunkComponentType<VehicleBodyMoveAndRotate>(false);
             //schedule job to populate vehicles to paths
             JobHandle job = new OnetimePopulateVehicleToPathJob
             {
                 map = hashMap,
-            }.Schedule(this, inputDeps);
+                vehicleBodyType = bodyType
+            }.Schedule(vehicleBodidesEntities, inputDeps);
 
             job.Complete();
             hashMap.Dispose();
@@ -109,21 +121,26 @@ namespace CivilFX.TrafficECS
                 return OneTimeSetup(inputDeps);
             }
 
-            //schedule resolve next path
-            JobHandle resolveNodeJob = new GetVehicleBodyPositionJob
+            var bodyType = GetArchetypeChunkComponentType<VehicleBodyMoveAndRotate>(false);
+            JobHandle resolveNextNodeJob = new ResolveNextPositionForVehicleJob
             {
-                commandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
-                paths = this.paths,
-            }.Schedule(this, inputDeps);
+                vehicleBodyType = bodyType,
+                paths = paths,
+            }.Schedule(vehicleBodidesEntities, inputDeps);
+
+            //***********************************************
+
 
             //schedule clear paths occupancy
+            var pathType = GetArchetypeChunkComponentType<Path>(false);
             JobHandle clearPathsJob = new ClearPathsOccupancyJob
             {
+                pathType = pathType
+            }.Schedule(pathEntities, resolveNextNodeJob);
 
-            }.Schedule(this, resolveNodeJob);
+            //***********************************************
 
             NativeMultiHashMap<int, VehiclePosition> hashMap = new NativeMultiHashMap<int, VehiclePosition>(10000, Allocator.TempJob);
-
             //schedule move vehicle job
             JobHandle moveVehicleJob = new MoveVehicleBodyJob
             {
@@ -145,7 +162,8 @@ namespace CivilFX.TrafficECS
             JobHandle fillPathOccupancy = new FillPathsOccupancyJob
             {
                 map = hashMap,
-            }.Schedule(this, moveVehicleJob);
+                pathType = pathType
+            }.Schedule(pathEntities, moveVehicleJob);
 
             fillPathOccupancy.Complete();
             moveVehicleWheelJob.Complete();
