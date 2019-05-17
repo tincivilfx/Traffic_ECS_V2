@@ -239,35 +239,48 @@ namespace CivilFX.TrafficECS {
 
         //TODO: set location value here instead of waiting for main thread
         //Job to move vehicle
-        public struct MoveVehicleBodyJob : IJobForEachWithEntity<VehicleBodyMoveAndRotate, Rotation>
+        [BurstCompile]
+        public struct MoveVehicleBodyJob : IJobChunk
         {
             public EntityCommandBuffer.Concurrent commandBuffer;
             [WriteOnly] public NativeMultiHashMap<int, VehiclePosition>.Concurrent map;
-            public void Execute(Entity entity, int index, ref VehicleBodyMoveAndRotate vehicle, ref Rotation rotation)
+
+            [ReadOnly] public ArchetypeChunkComponentType<VehicleBodyMoveAndRotate> vehicleBodyType;
+            public ArchetypeChunkComponentType<Translation> vehicletranslateType;
+            public ArchetypeChunkComponentType<Rotation> vehicleRotationType;
+            
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
-                if (vehicle.waiting)
+                var chunkRotation = chunk.GetNativeArray(vehicleRotationType);
+                var chunkTranslation = chunk.GetNativeArray(vehicletranslateType);
+                var chunkVehicleBodyType = chunk.GetNativeArray(vehicleBodyType);
+
+                for (int i=0; i<chunk.Count; i++)
                 {
-                    return;
+                    var vehicleData = chunkVehicleBodyType[i];
+
+                    //set location
+                    chunkTranslation[i] = new Translation { Value = vehicleData.location };
+
+                    //set rotation
+                    chunkRotation[i] = new Rotation { Value = quaternion.LookRotation(vehicleData.lookAtLocation - vehicleData.location, new float3(0, 1, 0)) };
+
+                    //add info to hashmap
+                    map.Add(vehicleData.currentPathID, new VehiclePosition { pos = vehicleData.currentPos, length = vehicleData.length });
                 }
-                //set location
-                commandBuffer.SetComponent(index, entity, new Translation { Value = vehicle.location });
-
-                //add info to hashmap
-                map.Add(vehicle.currentPathID, new VehiclePosition { pos = vehicle.currentPos, length = vehicle.length });
-
-                //set rotation
-                var rot = quaternion.LookRotation(vehicle.lookAtLocation - vehicle.location, new float3(0, 1, 0));                
-                commandBuffer.SetComponent(index, entity, new Rotation { Value = rot });
             }
         }
+   
 
         //job to rotate wheels
         //location will be handled by unity built-in system
-        public struct MoveVehicleWheelJob : IJobForEachWithEntity<VehicleWheelMoveAndRotate, Rotation>
+        public struct MoveVehicleWheelJob : IJobChunk
         {
             public float deltaTime;
-            public EntityCommandBuffer.Concurrent commandBuffer;
             [ReadOnly] public NativeArray<VehicleBodyMoveAndRotate> bodies;
+
+            public ArchetypeChunkComponentType<Rotation> wheelRotationType;
+            public ArchetypeChunkComponentType<VehicleWheelMoveAndRotate> vehicleWheelType;
             public void Execute(Entity entity, int index, ref VehicleWheelMoveAndRotate wheel, ref Rotation rotation)
             {
 
@@ -281,23 +294,13 @@ namespace CivilFX.TrafficECS {
                         break;
                     }
                 }
-
-               
-                
-                //safety check
-                if (body.Equals(VehicleBodyMoveAndRotate.Null))
-                {
-                    //Debug.LogError("Failed to rotate wheel");
-                    return;
-                }
-                /*
-                if (body.waiting)
-                {
-                    commandBuffer.AddComponent(index, entity, new Frozen { });
-                    return;
-                }
-                */
                 rotation.Value = math.mul(math.normalize(rotation.Value), quaternion.AxisAngle(new float3 (1,0,0), body.speed * deltaTime));
+            }
+
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+            {
+                var rotationChunk = chunk.GetNativeArray(wheelRotationType);
+                 
             }
         }
 

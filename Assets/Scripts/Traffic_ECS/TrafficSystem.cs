@@ -6,6 +6,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Jobs;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Transforms;
 
 namespace CivilFX.TrafficECS
 {
@@ -142,12 +143,18 @@ namespace CivilFX.TrafficECS
 
             NativeMultiHashMap<int, VehiclePosition> hashMap = new NativeMultiHashMap<int, VehiclePosition>(10000, Allocator.TempJob);
             //schedule move vehicle job
+            var rotationType = GetArchetypeChunkComponentType<Rotation>(false);
+            var translationType = GetArchetypeChunkComponentType<Translation>(false);
             JobHandle moveVehicleJob = new MoveVehicleBodyJob
             {
                 commandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
                 map = hashMap.ToConcurrent(),
-            }.Schedule(this, clearPathsJob);
+                vehicleRotationType = rotationType,
+                vehicletranslateType = translationType,
+                vehicleBodyType = bodyType
+            }.Schedule(vehicleBodidesEntities, clearPathsJob);
             moveVehicleJob.Complete();
+
             NativeArray<VehicleBodyMoveAndRotate> vehicleBodies = GetEntityQuery(ComponentType.ReadOnly(typeof(VehicleBodyMoveAndRotate))).ToComponentDataArray<VehicleBodyMoveAndRotate>(Allocator.TempJob, out moveVehicleJob);
 
             //schedule move wheel job
