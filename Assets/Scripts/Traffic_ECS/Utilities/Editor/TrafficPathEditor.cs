@@ -116,11 +116,11 @@ namespace CivilFX.TrafficECS
             currentProp = so.FindProperty("splitChance");
             EditorGUILayout.PropertyField(currentProp, new GUIContent("Chance to split into this path"));
 
-            /*
-            //phase type
-            currentProp = so.FindProperty("phaseTypes");
-            EditorGUILayout.PropertyField(currentProp, new GUIContent("Phases"), true);
-            */
+            
+            //path type
+            currentProp = so.FindProperty("type");
+            EditorGUILayout.PropertyField(currentProp, new GUIContent("Type"), true);
+            
             EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
 

@@ -14,10 +14,65 @@ namespace CivilFX.TrafficECS {
 
     public unsafe partial class TrafficSystem
     {
+        public enum OccupiedType
+        {
+            Vehicle,
+            TrafficSignal
+        }
+
+        public static readonly byte VEHICLE_OCCUPIED_BIT = 1;
+        public static readonly byte TRAFFIC_SIGNAL_OCCUPIED_BIT = 2;
+        public static readonly byte YIELD_OCCUPIED_BIT = 4;
+
         public static float Map(float value, float lowerLimit, float uperLimit, float lowerValue, float uperValue)
         {
             return lowerValue + ((uperValue - lowerValue) / (uperLimit - lowerLimit)) * (value - lowerLimit);
         }
+
+        public static byte SetOccupied(byte value, bool occupied, OccupiedType type)
+        {
+            switch (type)
+            {
+                case OccupiedType.Vehicle:
+                    if (occupied)
+                    {
+                        //set bit
+                        value = (byte)(value | VEHICLE_OCCUPIED_BIT);
+                    } else
+                    {
+                        //clear bit
+                        value = (byte)(value & (~VEHICLE_OCCUPIED_BIT));
+                    }
+                    break;
+                case OccupiedType.TrafficSignal:
+                    if (occupied)
+                    {
+                        value = (byte)(value | TRAFFIC_SIGNAL_OCCUPIED_BIT);
+                    } else
+                    {
+                        value = (byte)(value & (~TRAFFIC_SIGNAL_OCCUPIED_BIT));
+                    }
+                    break;
+            }
+            return value;
+        }
+
+        //return    true if occupied
+        //          false otherwise
+        public static bool CheckOccupied(byte value, OccupiedType type)
+        {
+            switch (type)
+            {
+                case OccupiedType.Vehicle:
+                    return (value & VEHICLE_OCCUPIED_BIT) != 0;
+                case OccupiedType.TrafficSignal:
+                    return (value & TRAFFIC_SIGNAL_OCCUPIED_BIT) != 0;
+            }
+            return true;
+        }
+
+
+
 
         [BurstCompile]
         public struct OnetimePopulateVehicleToPathJob : IJobForEachWithEntity<VehicleBodyMoveAndRotate>
@@ -77,7 +132,7 @@ namespace CivilFX.TrafficECS {
                 next = scanDis;
                 for (int i=1; i< scanDis; i++)
                 {
-                    if (currentPath.occupied[frontPos + i])
+                    if (CheckOccupied(currentPath.occupied[frontPos + i], OccupiedType.Vehicle))
                     {
                         next = i;
                         break;
@@ -105,7 +160,7 @@ namespace CivilFX.TrafficECS {
             {
                 for (int i=0; i< path.nodesCount; i++)
                 {
-                    path.occupied[i] = false;
+                    path.occupied[i] = 0;
                 }
             }
         }
@@ -134,7 +189,7 @@ namespace CivilFX.TrafficECS {
                     //start fill
                     for (int i= fillStart; i< fillEnd; i++)
                     {
-                        path.occupied[i] = true;
+                        path.occupied[i] = SetOccupied(path.occupied[i], true, OccupiedType.Vehicle);
                     }
                     found = map.TryGetNextValue(out fillPosition, ref iterator);
                 }

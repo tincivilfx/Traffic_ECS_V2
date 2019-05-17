@@ -68,7 +68,6 @@ namespace CivilFX.TrafficECS
 
         #endregion
 
-
         [HideInInspector]
         public int bakedResolution;
 
@@ -111,13 +110,20 @@ namespace CivilFX.TrafficECS
         [System.NonSerialized]
         [HideInInspector]
         public int splitToCount;
+
+        //ECS
+        [HideInInspector]
+        public byte id;
+
+        public TrafficPathType type;
+
         #endregion
 
-        public void Init(List<Vector3> _pathNodes, string _pathName, BakedPathType _pathType, int pathSpeed, int _resolution, int _splitToChance ,string _notes)
+        public void Init(List<Vector3> _pathNodes, string _pathName, TrafficPathType _pathType, int pathSpeed, int _resolution, int _splitToChance ,string _notes)
         {
             pathNodes = _pathNodes;
             pathName = _pathName;
-            pathType = _pathType;
+            type = _pathType;
             speedLitmit = pathSpeed;
             bakedResolution = _resolution;
             actualSpeedLimit = speedLitmit / _resolution;
@@ -134,7 +140,7 @@ namespace CivilFX.TrafficECS
                 Debug.Log("Refreshing: " + BuildFilePath(location, pathName));
                 path.PathNodes = pathNodes;
                 path.PathName = pathName;
-                path.pathType = pathType;
+                path.type = type;
                 path.speedLitmit = speedLitmit;
                 path.bakedResolution = bakedResolution;
                 path.actualSpeedLimit = actualSpeedLimit;

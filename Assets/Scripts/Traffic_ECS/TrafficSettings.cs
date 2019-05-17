@@ -10,39 +10,17 @@ using System;
 namespace CivilFX.TrafficECS
 {
     #region inner classes
-    public unsafe class CustomMemory
+    public unsafe class CustomMemoryManagerBase
     {
+        protected void* ptr;
+        protected Allocator allocator;
 
-    }
-    public unsafe class CustomMemoryManager <T> where T : unmanaged
-    {
-        private void* ptr;
-        private Allocator allocator;
-
-        public CustomMemoryManager()
+        public CustomMemoryManagerBase()
         {
             ptr = null;
         }
 
-        public void AllocateMemory(long size, int alignment, Allocator _allocator)
-        {
-            allocator = _allocator;
-
-            try
-            {
-                ptr = UnsafeUtility.Malloc(size * sizeof(T), alignment, allocator);
-            } catch (Exception ex) {
-                Debug.LogError("Failed to allocate memory: " + ex.Message);
-            }
-        }
-
-        public T* GetPointer()
-        {
-            return (T*)ptr;
-        }
-
-
-        ~CustomMemoryManager()
+        ~CustomMemoryManagerBase()
         {
             if (ptr != null)
             {
@@ -50,7 +28,31 @@ namespace CivilFX.TrafficECS
                 UnsafeUtility.Free(ptr, allocator);
             }
         }
+    }
 
+    public unsafe class CustomMemoryManager <T> : CustomMemoryManagerBase where T : unmanaged
+    {
+        public CustomMemoryManager() : base()
+        {
+
+        }
+
+        public void AllocateMemory(long size, int alignment, Allocator _allocator)
+        {
+            allocator = _allocator;
+            try
+            {
+                ptr = UnsafeUtility.Malloc(size * UnsafeUtility.SizeOf<T>(), alignment, allocator);
+                Debug.Log("Allocate: " + size * UnsafeUtility.SizeOf<T>());
+            } catch (Exception ex) {
+                Debug.LogError("Failed to allocate memory: " + ex.Message);
+            }
+        }
+
+        public T* GetPointer()
+        {
+            return ptr == null ? null : (T*)ptr;
+        }
     }
     #endregion
 
@@ -63,23 +65,19 @@ namespace CivilFX.TrafficECS
         public VehicleCollector collector;
 
         [Header("--------------------")]
-        public BakedTrafficPath path;
+        public BakedTrafficPathCollector pathsCollector;
 
         //
         public static int VEHICLE_ID_POOL = 0;
         public static int PATH_ID_POOL = 0;
 
-
-        private List<CustomMemoryManager<float3>> unsafeMemoriesFloat3;
-        private List<CustomMemoryManager<bool>> unsafeMemoriesBool;
-
+        private List<CustomMemoryManagerBase> unsafeMemoryReferences;
 
         public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
         {
             Debug.Log("Converting");
 
-            unsafeMemoriesFloat3 = new List<CustomMemoryManager<float3>>();
-            unsafeMemoriesBool = new List<CustomMemoryManager<bool>>();
+            unsafeMemoryReferences = new List<CustomMemoryManagerBase>();
 
             List<VehicleObject> vehiclePrefabs;
             InitializeTotalVehicles(out vehiclePrefabs);
@@ -114,46 +112,86 @@ namespace CivilFX.TrafficECS
             }
             //
             
-            //convert path asset to ecs
-            Entity pathEntity = conversionSystem.CreateAdditionalEntity(this);
+            /*********** WORKING ON PATHS ********/
 
+            //assign path's ID
+            for (int i=0; i<pathsCollector.bakedTrafficPaths.Length; i++)
+            {
+                pathsCollector.bakedTrafficPaths[i].id = (byte)PATH_ID_POOL;
+                PATH_ID_POOL++;
+            }
+
+            //conver path asset to ecs data
             unsafe
             {
-                //path
-                CustomMemoryManager<float3> pathMem = new CustomMemoryManager<float3>();
-                pathMem.AllocateMemory(path.PathNodes.Count, 32, Allocator.Persistent);
-                //add to list
-                unsafeMemoriesFloat3.Add(pathMem);
-
-                //occupied
-                CustomMemoryManager<bool> occupiedSlotMem = new CustomMemoryManager<bool>();
-                occupiedSlotMem.AllocateMemory(path.PathNodes.Count, 8, Allocator.Persistent);
-
-                //add to list
-                unsafeMemoriesBool.Add(occupiedSlotMem);
-
-                //var nodes = (float3*)UnsafeUtility.Malloc(path.PathNodes.Count * sizeof(float3), 32, Allocator.Persistent);
-                //var occupiedSlot = (bool*)UnsafeUtility.Malloc(path.PathNodes.Count * sizeof(bool), 8, Allocator.Persistent);
-
-                for (int i=0; i<path.PathNodes.Count; i++)
+                for (int i = 0; i < pathsCollector.bakedTrafficPaths.Length; i++)
                 {
-                    pathMem.GetPointer()[i] = path.PathNodes[i];
-                    occupiedSlotMem.GetPointer()[i] = false;
+                    //get current path
+                    var currentPath = pathsCollector.bakedTrafficPaths[i];
+                    Debug.Log(currentPath.PathName);
+
+                    //create entity
+                    var pathEntity = conversionSystem.CreateAdditionalEntity(this);
+
+                    //allocate native memory
+                    CustomMemoryManager<float3> pathMem = new CustomMemoryManager<float3>();
+                    pathMem.AllocateMemory(currentPath.PathNodes.Count, 32, Allocator.Persistent);
+
+                    CustomMemoryManager<byte> occupiedSlotMem = new CustomMemoryManager<byte>();
+                    occupiedSlotMem.AllocateMemory(currentPath.PathNodes.Count, 8, Allocator.Persistent);
+
+                    //add to list
+                    unsafeMemoryReferences.Add(pathMem);
+                    unsafeMemoryReferences.Add(occupiedSlotMem);
+
+
+                    //populate allocated memory
+                    var nodesPtr = pathMem.GetPointer();
+                    var occupiedPtr = occupiedSlotMem.GetPointer();
+                    for (int j = 0; j < currentPath.PathNodes.Count; j++)
+                    {
+                        nodesPtr[j] = currentPath.PathNodes[j];
+                        occupiedPtr[j] = 0;
+                    }
+
+                    
+                    //populate linked count
+                    byte linkedCount = 0;
+                    CustomMemoryManager<PathLinkedData> linkedData = new CustomMemoryManager<PathLinkedData>();
+                    unsafeMemoryReferences.Add(linkedData);
+
+                    if (currentPath.splittingPaths != null && currentPath.splittingPaths.Count > 0)
+                    {
+                        linkedData.AllocateMemory(currentPath.splittingPaths.Count, 32, Allocator.Persistent);
+                        var linkedDataPtr = linkedData.GetPointer();
+
+                        for (int j=0; j<currentPath.splittingPaths.Count; j++)
+                        {
+                            linkedDataPtr[j].chance = (byte)currentPath.splittingPaths[j].turnedChance;
+                            linkedDataPtr[j].connectingNode = currentPath.splittingPaths[j].startNode;
+                            linkedDataPtr[j].transitionNode = currentPath.splittingPaths[j].transitionNode;
+                            linkedDataPtr[j].linkedID = currentPath.splittingPaths[j].turnedPath.id;
+                        }
+                    }
+                    
+
+                    //create ecs data
+                    var pathData = new Path
+                    {
+                        id = currentPath.id,
+                        maxSpeed = (byte)currentPath.actualSpeedLimit,
+                        nodesCount = currentPath.PathNodes.Count,
+                        pathNodes = nodesPtr,
+                        occupied = occupiedPtr,
+                        linkedCount = linkedCount,
+                        linked = linkedData.GetPointer()
+                    };
+
+                    //add ecs data
+                    dstManager.AddComponentData(pathEntity, pathData);
                 }
-
-                Debug.Log("Finished");
-
-                var pathData = new Path
-                {
-                    id = 0,
-                    maxSpeed = (byte)path.actualSpeedLimit,
-                    nodesCount = path.PathNodes.Count,
-                    pathNodes = pathMem.GetPointer(),
-                    occupied = occupiedSlotMem.GetPointer()
-                };
-                dstManager.AddComponentData(pathEntity, pathData);
             }
-        
+
             //add total vehicles to ECS
             var traffSettings = new TrafficSettingsData
             {
@@ -161,11 +199,14 @@ namespace CivilFX.TrafficECS
             };
             dstManager.AddComponentData(entity, traffSettings);
 
-
+            Debug.Log("Finished");
 
             //Done with paths
             //upload them
-            Resources.UnloadAsset(path);
+            
+            Resources.UnloadAsset(pathsCollector);
+            pathsCollector = null;
+            
 
             //explicitly call garbage collector
             System.GC.Collect();

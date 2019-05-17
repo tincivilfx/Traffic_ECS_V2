@@ -4,7 +4,14 @@ using UnityEngine;
 
 namespace CivilFX.TrafficECS
 {
-
+    public enum TrafficPathType : byte
+    {
+        Main,
+        MainConnector,
+        LeftTurn,
+        RightTurn,
+        Connector
+    }
     public class TrafficPath : MonoBehaviour
     {
 
@@ -23,6 +30,8 @@ namespace CivilFX.TrafficECS
         public int bakedResolution = 2;
         [Range(0, 100)]
         public int splitChance;
+        public TrafficPathType type;
+
         public string notes;
 
         #region fields used only for inspector

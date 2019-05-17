@@ -35,6 +35,8 @@ namespace CivilFX.TrafficECS
             paths = queries.ToComponentDataArray<Path>(Allocator.Persistent);
 
 
+
+
             //schedule job to populate vehicles to paths
             JobHandle job = new OnetimePopulateVehicleToPathJob
             {
@@ -48,6 +50,7 @@ namespace CivilFX.TrafficECS
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
+            //skip to next frame to make sure all the vehicles are initialized
             if (framesToSkip > 0)
             {
                 framesToSkip--;

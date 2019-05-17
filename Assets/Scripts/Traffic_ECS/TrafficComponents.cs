@@ -53,17 +53,19 @@ namespace CivilFX.TrafficECS
     {
         public byte id;
         public byte maxSpeed;
+        public byte linkedCount;
         public int nodesCount;
-
 
         [NativeDisableUnsafePtrRestriction]
         public float3* pathNodes;
 
         [NativeDisableUnsafePtrRestriction]
-        public bool* occupied;
+        public byte* occupied;
 
+        
         [NativeDisableUnsafePtrRestriction]
         public PathLinkedData* linked; 
+        
     }
 
     public struct WaitingVehicle : IComponentData
