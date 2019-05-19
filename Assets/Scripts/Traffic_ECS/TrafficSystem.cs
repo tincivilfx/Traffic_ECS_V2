@@ -24,6 +24,8 @@ namespace CivilFX.TrafficECS
         private float delayForStability = 1.0f;
         private int framesToSkip = 1;
 
+        private Transform camTrans;
+
         #region caches entities
         EntityQuery pathEntities;
         EntityQuery vehicleBodidesEntities;
@@ -37,6 +39,8 @@ namespace CivilFX.TrafficECS
 
         private JobHandle OneTimeSetup(JobHandle inputDeps)
         {
+            camTrans = Camera.main.transform;
+            //Debug.Log(cam.gameObject.name);
             //cache references to paths data
             pathEntities = GetEntityQuery(ComponentType.ReadOnly(typeof(Path)));
             paths = pathEntities.ToComponentDataArray<Path>(Allocator.Persistent);
@@ -156,14 +160,17 @@ namespace CivilFX.TrafficECS
             moveVehicleJob.Complete();
 
             NativeArray<VehicleBodyMoveAndRotate> vehicleBodies = GetEntityQuery(ComponentType.ReadOnly(typeof(VehicleBodyMoveAndRotate))).ToComponentDataArray<VehicleBodyMoveAndRotate>(Allocator.TempJob, out moveVehicleJob);
-
             //schedule move wheel job
+            var wheelType = GetArchetypeChunkComponentType<VehicleWheelMoveAndRotate>(false);
             JobHandle moveVehicleWheelJob = new MoveVehicleWheelJob
             {
+                cameraPosition = camTrans.position,
                 deltaTime = Time.deltaTime,
-                commandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
                 bodies = vehicleBodies,
-            }.Schedule(this, moveVehicleJob);
+                wheelRotationType = rotationType,
+                vehicleWheelType = wheelType,
+            }.Schedule(vehicleWheelsEntities, moveVehicleJob);
+            
 
             //Schedule filljob
             JobHandle fillPathOccupancy = new FillPathsOccupancyJob

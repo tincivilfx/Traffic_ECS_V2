@@ -274,33 +274,39 @@ namespace CivilFX.TrafficECS {
 
         //job to rotate wheels
         //location will be handled by unity built-in system
+        [BurstCompile]
         public struct MoveVehicleWheelJob : IJobChunk
         {
+            public float3 cameraPosition;
             public float deltaTime;
             [ReadOnly] public NativeArray<VehicleBodyMoveAndRotate> bodies;
-
+            [ReadOnly] public ArchetypeChunkComponentType<VehicleWheelMoveAndRotate> vehicleWheelType;
             public ArchetypeChunkComponentType<Rotation> wheelRotationType;
-            public ArchetypeChunkComponentType<VehicleWheelMoveAndRotate> vehicleWheelType;
-            public void Execute(Entity entity, int index, ref VehicleWheelMoveAndRotate wheel, ref Rotation rotation)
-            {
-
-                VehicleBodyMoveAndRotate body = VehicleBodyMoveAndRotate.Null;
-
-                for (int i=0; i<bodies.Length; i++)
-                {
-                    if (wheel.id == bodies[i].id)
-                    {
-                        body = bodies[i];
-                        break;
-                    }
-                }
-                rotation.Value = math.mul(math.normalize(rotation.Value), quaternion.AxisAngle(new float3 (1,0,0), body.speed * deltaTime));
-            }
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 var rotationChunk = chunk.GetNativeArray(wheelRotationType);
-                 
+                var wheelChunk = chunk.GetNativeArray(vehicleWheelType);
+
+                return;
+
+                for (int i=0; i<chunk.Count; i++)
+                {
+                    var body = VehicleBodyMoveAndRotate.Null;
+
+                    //find body
+                    for (int j=0; j<bodies.Length; j++)
+                    {
+                        if (wheelChunk[i].id == bodies[j].id)
+                        {
+                            body = bodies[j];
+                            break;
+                        }
+                    }
+                    var rot = math.mul(math.normalize(rotationChunk[i].Value), quaternion.AxisAngle(new float3(1, 0, 0), body.speed * deltaTime));
+                    rotationChunk[i] = new Rotation { Value = rot };
+                }
+
             }
         }
 
