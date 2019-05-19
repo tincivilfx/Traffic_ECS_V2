@@ -281,19 +281,23 @@ namespace CivilFX.TrafficECS {
             public float deltaTime;
             [ReadOnly] public NativeArray<VehicleBodyMoveAndRotate> bodies;
             [ReadOnly] public ArchetypeChunkComponentType<VehicleWheelMoveAndRotate> vehicleWheelType;
+            [ReadOnly] public ArchetypeChunkComponentType<LocalToWorld> wheelLocationType;
             public ArchetypeChunkComponentType<Rotation> wheelRotationType;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 var rotationChunk = chunk.GetNativeArray(wheelRotationType);
                 var wheelChunk = chunk.GetNativeArray(vehicleWheelType);
-
-                return;
+                var locationChunk = chunk.GetNativeArray(wheelLocationType);
 
                 for (int i=0; i<chunk.Count; i++)
                 {
+                    var location = locationChunk[i];
+                    if (math.distance(location.Position, cameraPosition) >= 50.0f)
+                    {
+                        return;
+                    }
                     var body = VehicleBodyMoveAndRotate.Null;
-
                     //find body
                     for (int j=0; j<bodies.Length; j++)
                     {

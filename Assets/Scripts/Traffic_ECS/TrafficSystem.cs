@@ -162,6 +162,7 @@ namespace CivilFX.TrafficECS
             NativeArray<VehicleBodyMoveAndRotate> vehicleBodies = GetEntityQuery(ComponentType.ReadOnly(typeof(VehicleBodyMoveAndRotate))).ToComponentDataArray<VehicleBodyMoveAndRotate>(Allocator.TempJob, out moveVehicleJob);
             //schedule move wheel job
             var wheelType = GetArchetypeChunkComponentType<VehicleWheelMoveAndRotate>(false);
+            var wheelLocationType = GetArchetypeChunkComponentType<LocalToWorld>(false);
             JobHandle moveVehicleWheelJob = new MoveVehicleWheelJob
             {
                 cameraPosition = camTrans.position,
@@ -169,6 +170,7 @@ namespace CivilFX.TrafficECS
                 bodies = vehicleBodies,
                 wheelRotationType = rotationType,
                 vehicleWheelType = wheelType,
+                wheelLocationType = wheelLocationType,
             }.Schedule(vehicleWheelsEntities, moveVehicleJob);
             
 

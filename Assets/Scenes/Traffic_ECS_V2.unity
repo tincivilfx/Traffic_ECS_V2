@@ -614,7 +614,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1bfa7d0bea55ed042bcb0c65f84fe944, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  totalVehicles: 20
+  totalVehicles: 11000
   collector: {fileID: 11400000, guid: cfbb0e914d21c9049a609eec8b95d7cb, type: 2}
   pathsCollector: {fileID: 11400000, guid: d81f457c8df74a34e8a9e76cc0c78e91, type: 2}
 --- !u!114 &922602428
