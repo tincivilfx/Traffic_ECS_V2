@@ -66,6 +66,38 @@ namespace CivilFX.TrafficECS
         
     }
 
+    //used to controll an intersection
+    public unsafe struct TrafficSignalNode : IComponentData
+    {
+        public byte currentIndex;
+        public float currentTime;
+        [NativeDisableUnsafePtrRestriction]
+        public SignalSet* sets;
+        public SignalSequence sequence;
+    }
+
+    public unsafe struct SignalSet
+    {
+        public byte id;
+
+        [NativeDisableUnsafePtrRestriction]
+        public byte* pathIDs;
+
+        [NativeDisableUnsafePtrRestriction]
+        public int* stopPoses;
+    }
+
+    public struct SignalSequence
+    {
+
+    }
+
+    public struct SignalFrame
+    {
+        public float time;
+
+    }
+
     public struct WaitingVehicle : IComponentData
     {
         //for tagging purposing
@@ -94,5 +126,7 @@ namespace CivilFX.TrafficECS
         public int transitionNode;
         public int connectingNode;
     }
+
+
 
 }

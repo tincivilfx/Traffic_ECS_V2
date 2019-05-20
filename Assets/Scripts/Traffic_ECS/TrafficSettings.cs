@@ -10,50 +10,7 @@ using System;
 namespace CivilFX.TrafficECS
 {
     #region inner classes
-    public unsafe class CustomMemoryManagerBase
-    {
-        protected void* ptr;
-        protected Allocator allocator;
-
-        public CustomMemoryManagerBase()
-        {
-            ptr = null;
-        }
-
-        ~CustomMemoryManagerBase()
-        {
-            if (ptr != null)
-            {
-                Debug.Log("Deallocate");
-                UnsafeUtility.Free(ptr, allocator);
-            }
-        }
-    }
-
-    public unsafe class CustomMemoryManager <T> : CustomMemoryManagerBase where T : unmanaged
-    {
-        public CustomMemoryManager() : base()
-        {
-
-        }
-
-        public void AllocateMemory(long size, int alignment, Allocator _allocator)
-        {
-            allocator = _allocator;
-            try
-            {
-                ptr = UnsafeUtility.Malloc(size * UnsafeUtility.SizeOf<T>(), alignment, allocator);
-                //Debug.Log("Allocate: " + size * UnsafeUtility.SizeOf<T>());
-            } catch (Exception ex) {
-                //Debug.LogError("Failed to allocate memory: " + ex.Message);
-            }
-        }
-
-        public T* GetPointer()
-        {
-            return ptr == null ? null : (T*)ptr;
-        }
-    }
+    
     #endregion
 
     public unsafe class TrafficSettings : MonoBehaviour, IConvertGameObjectToEntity, IDeclareReferencedPrefabs
@@ -62,11 +19,13 @@ namespace CivilFX.TrafficECS
         public int totalVehicles;
 
         [Header("--------------------")]
-        public VehicleCollector collector;
+        public VehicleCollector vehiclesCollector;
 
         [Header("--------------------")]
         public BakedTrafficPathCollector pathsCollector;
 
+        [Header("--------------------")]
+        public TrafficSignalController[] signalControllers;
         //
         public static int VEHICLE_ID_POOL = 0;
         public static int PATH_ID_POOL = 0;
@@ -192,6 +151,60 @@ namespace CivilFX.TrafficECS
                 }
             }
 
+
+            //***************************************************
+            //handle signal controllers
+            if (signalControllers !=null && signalControllers.Length > 0)
+            {
+                
+                //iterate over each signal controller
+                //each signalcontroller will have a set
+                for (int i = 0; i < signalControllers.Length; i++)
+                {
+                    var signal = signalControllers[i];
+
+                    //allocate memory for set
+                    CustomMemoryManager<SignalSet> signalSetMem = new CustomMemoryManager<SignalSet>();
+                    signalSetMem.AllocateMemory(signal.sets.Length);
+                    var signalSetPtr = signalSetMem.GetPointer();
+
+                    for (int j = 0; j < signal.sets.Length; j++)
+                    {                    //allocate memory for pathsIDs
+                        CustomMemoryManager<byte> pathsIDsMem = new CustomMemoryManager<byte>();
+                        pathsIDsMem.AllocateMemory(signal.sets[j].bakedPaths.Length);
+                        var pathsIDsMemPTr = pathsIDsMem.GetPointer();
+
+                        CustomMemoryManager<int> stopPosesMem = new CustomMemoryManager<int>();
+                        stopPosesMem.AllocateMemory(signal.sets[j].bakedPaths.Length);
+                        var stopPosesMemPtr = stopPosesMem.GetPointer();
+
+                        for (int k=0; k<signal.sets[j].bakedPaths.Length; k++)
+                        {
+                            pathsIDsMemPTr[k] = signal.sets[j].bakedPaths[k].path.id;
+                            stopPosesMemPtr[k] = signal.sets[j].bakedPaths[k].stopPos;
+                        }
+
+                        signalSetPtr[j].id = signal.sets[j].id;
+                        signalSetPtr[j].pathIDs = pathsIDsMemPTr;
+                        signalSetPtr[j].stopPoses = stopPosesMemPtr;
+
+                        //add to list for deallocation 
+                        unsafeMemoryReferences.Add(stopPosesMem);
+                        unsafeMemoryReferences.Add(pathsIDsMem);
+                    }
+                    unsafeMemoryReferences.Add(signalSetMem);
+
+                    //create Entity
+                    var signalEntity = conversionSystem.CreateAdditionalEntity(this);
+                    var signalData = new TrafficSignalNode
+                    {
+                        sets = signalSetPtr
+                    };
+                    dstManager.AddComponentData(signalEntity, signalData);
+                }   
+            }
+            //***************************************************
+
             //add total vehicles to ECS
             var traffSettings = new TrafficSettingsData
             {
@@ -214,9 +227,9 @@ namespace CivilFX.TrafficECS
 
         public void DeclareReferencedPrefabs(List<GameObject> referencedPrefabs)
         {
-            for (int i = 0; i < collector.vehicles.Length; i++)
+            for (int i = 0; i < vehiclesCollector.vehicles.Length; i++)
             {
-                var vehiclePrefabs = collector.vehicles[i];
+                var vehiclePrefabs = vehiclesCollector.vehicles[i];
 
                 //add body;
                 referencedPrefabs.Add(vehiclePrefabs.body);
@@ -231,27 +244,27 @@ namespace CivilFX.TrafficECS
         {
             objs = new List<VehicleObject>(totalVehicles);
 
-            int lightVehiclesCount = Mathf.CeilToInt((float)totalVehicles * collector.percentage[0] / 100);
-            int mediumVehiclesCount = Mathf.CeilToInt((float)totalVehicles * collector.percentage[1] / 100);
-            int heavyVehiclesCount = Mathf.CeilToInt((float)totalVehicles * collector.percentage[2] / 100);
+            int lightVehiclesCount = Mathf.CeilToInt((float)totalVehicles * vehiclesCollector.percentage[0] / 100);
+            int mediumVehiclesCount = Mathf.CeilToInt((float)totalVehicles * vehiclesCollector.percentage[1] / 100);
+            int heavyVehiclesCount = Mathf.CeilToInt((float)totalVehicles * vehiclesCollector.percentage[2] / 100);
 
             var lightVehiclePrefabs = new List<VehicleObject>();
             var mediumVehiclePrefabs = new List<VehicleObject>();
             var heavyVehiclePrefabs = new List<VehicleObject>();
 
             //isolate each type
-            for (int i = 0; i < collector.vehicles.Length; i++)
+            for (int i = 0; i < vehiclesCollector.vehicles.Length; i++)
             {
-                switch (collector.vehicles[i].type)
+                switch (vehiclesCollector.vehicles[i].type)
                 {
                     case VehicleType.Light:
-                        lightVehiclePrefabs.Add(collector.vehicles[i]);
+                        lightVehiclePrefabs.Add(vehiclesCollector.vehicles[i]);
                         break;
                     case VehicleType.Medium:
-                        mediumVehiclePrefabs.Add(collector.vehicles[i]);
+                        mediumVehiclePrefabs.Add(vehiclesCollector.vehicles[i]);
                         break;
                     case VehicleType.Heavy:
-                        heavyVehiclePrefabs.Add(collector.vehicles[i]);
+                        heavyVehiclePrefabs.Add(vehiclesCollector.vehicles[i]);
                         break;
                 }
             }

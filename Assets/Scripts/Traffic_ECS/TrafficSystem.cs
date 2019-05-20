@@ -15,7 +15,6 @@ namespace CivilFX.TrafficECS
     public partial class TrafficSystem : JobComponentSystem
     {
 
-        [NativeDisableUnsafePtrRestriction]
         private NativeArray<Path> paths;
         
         private bool isDoneSetup;
@@ -32,7 +31,7 @@ namespace CivilFX.TrafficECS
         EntityQuery vehicleWheelsEntities;
         #endregion
 
-        protected override void OnCreateManager()
+        protected override void OnCreate()
         {
             m_EntityCommandBufferSystem = World.GetOrCreateSystem<BeginInitializationEntityCommandBufferSystem>();
         }
