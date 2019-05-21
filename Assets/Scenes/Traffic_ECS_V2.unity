@@ -710,6 +710,7 @@ MonoBehaviour:
       stopPos: 13995
     - path: {fileID: 11400000, guid: 01d9bca9f8886c44f8bd54094973909d, type: 2}
       stopPos: 13981
+  sequence: {fileID: 11400000, guid: 2190e51b26ee50f43a5e9b6039fb2113, type: 2}
 --- !u!1 &719250755
 GameObject:
   m_ObjectHideFlags: 0
@@ -1292,7 +1293,7 @@ MonoBehaviour:
   _SceneAsset: {fileID: 102900000, guid: 70084996c9eb4944fabdf8c228503052, type: 3}
   _HierarchyColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   AutoLoadScene: 1
-  m_SubSceneHeader: {fileID: 0}
+  m_SubSceneHeader: {fileID: 11400000, guid: b5b6a500c3ac39f41bc67f5957c2593b, type: 2}
 --- !u!4 &1595477090
 Transform:
   m_ObjectHideFlags: 0

@@ -7,6 +7,7 @@ namespace CivilFX.TrafficECS
     public class TrafficSignalController : MonoBehaviour
     {
         public BakedPathSet[] sets;
+        public TrafficSignalSequence sequence;
     }
 
 

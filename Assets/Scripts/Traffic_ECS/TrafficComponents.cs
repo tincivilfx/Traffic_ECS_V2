@@ -49,9 +49,11 @@ namespace CivilFX.TrafficECS
 
     public unsafe struct Path : IComponentData
     {
+        public static Path Null { get; }
         public byte id;
         public byte maxSpeed;
         public byte linkedCount;
+        public TrafficPathType type;
         public int nodesCount;
 
         [NativeDisableUnsafePtrRestriction]
@@ -70,16 +72,21 @@ namespace CivilFX.TrafficECS
     public unsafe struct TrafficSignalNode : IComponentData
     {
         public byte currentIndex;
+        public byte setsCount;
+        public byte sequenceCount;
         public float currentTime;
+        public float elapsedTime;
         [NativeDisableUnsafePtrRestriction]
         public SignalSet* sets;
-        public SignalSequence sequence;
+
+        [NativeDisableUnsafePtrRestriction]
+        public SignalFrame* sequence;
     }
 
     public unsafe struct SignalSet
     {
         public byte id;
-
+        public byte pathsCount;
         [NativeDisableUnsafePtrRestriction]
         public byte* pathIDs;
 
@@ -87,15 +94,13 @@ namespace CivilFX.TrafficECS
         public int* stopPoses;
     }
 
-    public struct SignalSequence
-    {
-
-    }
 
     public struct SignalFrame
     {
         public float time;
-
+        public byte setID;
+        public TrafficPathType type;
+        public bool active;
     }
 
     public struct WaitingVehicle : IComponentData

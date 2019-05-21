@@ -160,7 +160,7 @@ namespace CivilFX.TrafficECS {
                     var next = scanDis;
                     for (int j = 1; j < scanDis; j++)
                     {
-                        if (CheckOccupied(currentPath.occupied[frontPos + j], OccupiedType.Vehicle))
+                        if (CheckOccupied(currentPath.occupied[frontPos + j], OccupiedType.Vehicle) || CheckOccupied(currentPath.occupied[frontPos + j], OccupiedType.TrafficSignal))
                         {
                             next = j;
                             break;
@@ -197,7 +197,9 @@ namespace CivilFX.TrafficECS {
                     var path = chunkPath[i];
                     for (int j=0; j<path.nodesCount; j++)
                     {
-                        path.occupied[j] = 0;
+                        var lvalue = path.occupied[j];
+                        lvalue = SetOccupied(lvalue, false, OccupiedType.Vehicle);
+                        path.occupied[j] = lvalue;
                     }
                 }
             }

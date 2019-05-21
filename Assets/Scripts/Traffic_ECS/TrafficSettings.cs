@@ -10,7 +10,7 @@ using System;
 namespace CivilFX.TrafficECS
 {
     #region inner classes
-    
+
     #endregion
 
     public unsafe class TrafficSettings : MonoBehaviour, IConvertGameObjectToEntity, IDeclareReferencedPrefabs
@@ -32,7 +32,7 @@ namespace CivilFX.TrafficECS
 
         private List<CustomMemoryManagerBase> unsafeMemoryReferences;
 
-        public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
+        public unsafe void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
         {
             Debug.Log("Converting");
 
@@ -41,7 +41,7 @@ namespace CivilFX.TrafficECS
             List<VehicleObject> vehiclePrefabs;
             InitializeTotalVehicles(out vehiclePrefabs);
 
-            for (int i=0; i<vehiclePrefabs.Count; i++)
+            for (int i = 0; i < vehiclePrefabs.Count; i++)
             {
                 Entity bodyEntity = conversionSystem.CreateAdditionalEntity(this);
                 //convert vehicle body part to ECS
@@ -55,7 +55,7 @@ namespace CivilFX.TrafficECS
 
                 //convert vehicle wheel(s) part to ECS
                 var wheels = vehiclePrefabs[i].wheels;
-                for (int j=0; j<wheels.Length; j++)
+                for (int j = 0; j < wheels.Length; j++)
                 {
                     Entity wheelEntity = conversionSystem.CreateAdditionalEntity(this);
                     var vehicleWheel = new VehicleWheel
@@ -70,93 +70,93 @@ namespace CivilFX.TrafficECS
                 VEHICLE_ID_POOL++;
             }
             //
-            
+
             /*********** WORKING ON PATHS ********/
 
             //assign path's ID
-            for (int i=0; i<pathsCollector.bakedTrafficPaths.Length; i++)
+            for (int i = 0; i < pathsCollector.bakedTrafficPaths.Length; i++)
             {
                 pathsCollector.bakedTrafficPaths[i].id = (byte)PATH_ID_POOL;
                 PATH_ID_POOL++;
             }
 
             //conver path asset to ecs data
-            unsafe
+
+            for (int i = 0; i < pathsCollector.bakedTrafficPaths.Length; i++)
             {
-                for (int i = 0; i < pathsCollector.bakedTrafficPaths.Length; i++)
+                //get current path
+                var currentPath = pathsCollector.bakedTrafficPaths[i];
+                //Debug.Log(currentPath.PathName);
+
+                //create entity
+                var pathEntity = conversionSystem.CreateAdditionalEntity(this);
+
+                //allocate native memory
+                CustomMemoryManager<float3> pathMem = new CustomMemoryManager<float3>();
+                pathMem.AllocateMemory(currentPath.PathNodes.Count, 32, Allocator.Persistent);
+
+                CustomMemoryManager<byte> occupiedSlotMem = new CustomMemoryManager<byte>();
+                occupiedSlotMem.AllocateMemory(currentPath.PathNodes.Count, 8, Allocator.Persistent);
+
+                //add to list
+                unsafeMemoryReferences.Add(pathMem);
+                unsafeMemoryReferences.Add(occupiedSlotMem);
+
+
+                //populate allocated memory
+                var nodesPtr = pathMem.GetPointer();
+                var occupiedPtr = occupiedSlotMem.GetPointer();
+                for (int j = 0; j < currentPath.PathNodes.Count; j++)
                 {
-                    //get current path
-                    var currentPath = pathsCollector.bakedTrafficPaths[i];
-                    //Debug.Log(currentPath.PathName);
-
-                    //create entity
-                    var pathEntity = conversionSystem.CreateAdditionalEntity(this);
-
-                    //allocate native memory
-                    CustomMemoryManager<float3> pathMem = new CustomMemoryManager<float3>();
-                    pathMem.AllocateMemory(currentPath.PathNodes.Count, 32, Allocator.Persistent);
-
-                    CustomMemoryManager<byte> occupiedSlotMem = new CustomMemoryManager<byte>();
-                    occupiedSlotMem.AllocateMemory(currentPath.PathNodes.Count, 8, Allocator.Persistent);
-
-                    //add to list
-                    unsafeMemoryReferences.Add(pathMem);
-                    unsafeMemoryReferences.Add(occupiedSlotMem);
-
-
-                    //populate allocated memory
-                    var nodesPtr = pathMem.GetPointer();
-                    var occupiedPtr = occupiedSlotMem.GetPointer();
-                    for (int j = 0; j < currentPath.PathNodes.Count; j++)
-                    {
-                        nodesPtr[j] = currentPath.PathNodes[j];
-                        occupiedPtr[j] = 0;
-                    }
-
-                    
-                    //populate linked count
-                    byte linkedCount = 0;
-                    CustomMemoryManager<PathLinkedData> linkedData = new CustomMemoryManager<PathLinkedData>();
-                    unsafeMemoryReferences.Add(linkedData);
-
-                    if (currentPath.splittingPaths != null && currentPath.splittingPaths.Count > 0)
-                    {
-                        linkedData.AllocateMemory(currentPath.splittingPaths.Count, 32, Allocator.Persistent);
-                        var linkedDataPtr = linkedData.GetPointer();
-
-                        for (int j=0; j<currentPath.splittingPaths.Count; j++)
-                        {
-                            linkedDataPtr[j].chance = (byte)currentPath.splittingPaths[j].turnedChance;
-                            linkedDataPtr[j].connectingNode = currentPath.splittingPaths[j].startNode;
-                            linkedDataPtr[j].transitionNode = currentPath.splittingPaths[j].transitionNode;
-                            linkedDataPtr[j].linkedID = currentPath.splittingPaths[j].turnedPath.id;
-                        }
-                    }
-                    
-
-                    //create ecs data
-                    var pathData = new Path
-                    {
-                        id = currentPath.id,
-                        maxSpeed = (byte)currentPath.actualSpeedLimit,
-                        nodesCount = currentPath.PathNodes.Count,
-                        pathNodes = nodesPtr,
-                        occupied = occupiedPtr,
-                        linkedCount = linkedCount,
-                        linked = linkedData.GetPointer()
-                    };
-
-                    //add ecs data
-                    dstManager.AddComponentData(pathEntity, pathData);
+                    nodesPtr[j] = currentPath.PathNodes[j];
+                    occupiedPtr[j] = 0;
                 }
+
+
+                //populate linked count
+                byte linkedCount = 0;
+                CustomMemoryManager<PathLinkedData> linkedData = new CustomMemoryManager<PathLinkedData>();
+                unsafeMemoryReferences.Add(linkedData);
+
+                if (currentPath.splittingPaths != null && currentPath.splittingPaths.Count > 0)
+                {
+                    linkedData.AllocateMemory(currentPath.splittingPaths.Count, 32, Allocator.Persistent);
+                    var linkedDataPtr = linkedData.GetPointer();
+
+                    for (int j = 0; j < currentPath.splittingPaths.Count; j++)
+                    {
+                        linkedDataPtr[j].chance = (byte)currentPath.splittingPaths[j].turnedChance;
+                        linkedDataPtr[j].connectingNode = currentPath.splittingPaths[j].startNode;
+                        linkedDataPtr[j].transitionNode = currentPath.splittingPaths[j].transitionNode;
+                        linkedDataPtr[j].linkedID = currentPath.splittingPaths[j].turnedPath.id;
+                    }
+                }
+
+
+                //create ecs data
+                var pathData = new Path
+                {
+                    id = currentPath.id,
+                    maxSpeed = (byte)currentPath.actualSpeedLimit,
+                    type = currentPath.type,
+                    nodesCount = currentPath.PathNodes.Count,
+                    pathNodes = nodesPtr,
+                    occupied = occupiedPtr,
+                    linkedCount = linkedCount,
+                    linked = linkedData.GetPointer()
+                };
+
+                //add ecs data
+                dstManager.AddComponentData(pathEntity, pathData);
             }
+
 
 
             //***************************************************
             //handle signal controllers
-            if (signalControllers !=null && signalControllers.Length > 0)
+            if (signalControllers != null && signalControllers.Length > 0)
             {
-                
+
                 //iterate over each signal controller
                 //each signalcontroller will have a set
                 for (int i = 0; i < signalControllers.Length; i++)
@@ -178,13 +178,14 @@ namespace CivilFX.TrafficECS
                         stopPosesMem.AllocateMemory(signal.sets[j].bakedPaths.Length);
                         var stopPosesMemPtr = stopPosesMem.GetPointer();
 
-                        for (int k=0; k<signal.sets[j].bakedPaths.Length; k++)
+                        for (int k = 0; k < signal.sets[j].bakedPaths.Length; k++)
                         {
                             pathsIDsMemPTr[k] = signal.sets[j].bakedPaths[k].path.id;
                             stopPosesMemPtr[k] = signal.sets[j].bakedPaths[k].stopPos;
                         }
 
                         signalSetPtr[j].id = signal.sets[j].id;
+                        signalSetPtr[j].pathsCount = (byte)signal.sets[j].bakedPaths.Length;
                         signalSetPtr[j].pathIDs = pathsIDsMemPTr;
                         signalSetPtr[j].stopPoses = stopPosesMemPtr;
 
@@ -194,14 +195,30 @@ namespace CivilFX.TrafficECS
                     }
                     unsafeMemoryReferences.Add(signalSetMem);
 
+                    //allocate memory for sequence
+                    CustomMemoryManager<SignalFrame> signalFrameMem = new CustomMemoryManager<SignalFrame>();
+                    signalFrameMem.AllocateMemory(signal.sequence.sequences.Length);
+                    var signalFramePtr = signalFrameMem.GetPointer();
+                    
+                    for (int j=0; j<signal.sequence.sequences.Length; j++)
+                    {
+                        signalFramePtr[j].time = signal.sequence.sequences[j].time;
+                        signalFramePtr[j].setID = signal.sequence.sequences[j].setID;
+                        signalFramePtr[j].type = signal.sequence.sequences[j].type;
+                        signalFramePtr[j].active = signal.sequence.sequences[j].active;
+                    }
+
                     //create Entity
                     var signalEntity = conversionSystem.CreateAdditionalEntity(this);
                     var signalData = new TrafficSignalNode
                     {
-                        sets = signalSetPtr
+                        sets = signalSetPtr,
+                        setsCount = (byte)signal.sets.Length,
+                        sequence = signalFramePtr,
+                        sequenceCount = (byte)signal.sequence.sequences.Length
                     };
                     dstManager.AddComponentData(signalEntity, signalData);
-                }   
+                }
             }
             //***************************************************
 
@@ -216,10 +233,10 @@ namespace CivilFX.TrafficECS
 
             //Done with paths
             //upload them
-            
+
             Resources.UnloadAsset(pathsCollector);
             pathsCollector = null;
-            
+
 
             //explicitly call garbage collector
             System.GC.Collect();
@@ -269,7 +286,8 @@ namespace CivilFX.TrafficECS
                 }
             }
 
-            if (lightVehiclePrefabs.Count > 0) {
+            if (lightVehiclePrefabs.Count > 0)
+            {
 
                 while (lightVehiclePrefabs.Count < lightVehiclesCount)
                 {
@@ -279,7 +297,8 @@ namespace CivilFX.TrafficECS
                 lightVehiclePrefabs.RemoveRange(0, lightVehiclePrefabs.Count - lightVehiclesCount);
             }
 
-            if (mediumVehiclePrefabs.Count > 0) {
+            if (mediumVehiclePrefabs.Count > 0)
+            {
                 while (mediumVehiclePrefabs.Count < mediumVehiclesCount)
                 {
                     mediumVehiclePrefabs.AddRange(mediumVehiclePrefabs);
