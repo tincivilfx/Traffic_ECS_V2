@@ -130,6 +130,7 @@ namespace CivilFX.TrafficECS
 
             NativeArray<VehicleBodyMoveAndRotate> vehicleBodies = GetEntityQuery(ComponentType.ReadOnly(typeof(VehicleBodyMoveAndRotate))).ToComponentDataArray<VehicleBodyMoveAndRotate>(Allocator.TempJob, out JobHandle job);
 
+            /*
             //job to check for merging
             var mergeType = GetArchetypeChunkComponentType<PathMerge>(true);
             JobHandle resolveMergingJob = new ResolveMergingForPath
@@ -137,14 +138,15 @@ namespace CivilFX.TrafficECS
                 pathMergeType = mergeType,
                 paths = paths
             }.Schedule(pathMergingEntities, JobHandle.CombineDependencies(job, inputDeps));
-           
+           */
+
             //job to get the next position in the path
             var bodyType = GetArchetypeChunkComponentType<VehicleBodyMoveAndRotate>(false);
             JobHandle resolveNextNodeJob = new ResolveNextPositionForVehicleJob
             {
                 vehicleBodyType = bodyType,
                 paths = paths,
-            }.Schedule(vehicleBodidesEntities, resolveMergingJob);
+            }.Schedule(vehicleBodidesEntities, JobHandle.CombineDependencies(job, inputDeps));
 
             //***********************************************
 
@@ -195,11 +197,20 @@ namespace CivilFX.TrafficECS
                 pathType = pathType
             }.Schedule(pathEntities, moveVehicleJob);
 
+            //job to check for merging
+            var mergeType = GetArchetypeChunkComponentType<PathMerge>(true);
+            JobHandle resolveMergingJob = new ResolveMergingForPath
+            {
+                pathMergeType = mergeType,
+                paths = paths
+            }.Schedule(pathMergingEntities, fillPathOccupancy);
+
+
             fillPathOccupancy.Complete();
             hashMap.Dispose();
 
 
-            return JobHandle.CombineDependencies( fillPathOccupancy, moveVehicleWheelJob);
+            return JobHandle.CombineDependencies(resolveMergingJob, moveVehicleWheelJob);
         }
 
         protected override void OnDestroyManager()

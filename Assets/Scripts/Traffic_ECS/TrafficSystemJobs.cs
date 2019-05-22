@@ -25,7 +25,7 @@ namespace CivilFX.TrafficECS {
         public static readonly byte TRAFFIC_SIGNAL_OCCUPIED_BIT = 2;
         public static readonly byte YIELD_FOR_MERGING_OCCUPIED_BIT = 4;
 
-        public static readonly int MAX_SCAN_DISTANCE = 3000;
+        public static readonly int MAX_SCAN_DISTANCE = 1000;
 
         public static float Map(float value, float lowerLimit, float uperLimit, float lowerValue, float uperValue)
         {
@@ -229,7 +229,7 @@ namespace CivilFX.TrafficECS {
                             vehicleData.currentPathID = mergedPath.id;
                             vehicleData.currentPos = linkedData.connectingNode;
                             vehicleData.location = mergedPath.pathNodes[linkedData.connectingNode];
-                            vehicleData.lookAtLocation = mergedPath.pathNodes[linkedData.connectingNode + 1];
+                            vehicleData.lookAtLocation = mergedPath.pathNodes[linkedData.connectingNode + mergedPath.maxSpeed];
                             chunkVehicles[i] = vehicleData;
                         }
 
@@ -304,7 +304,7 @@ namespace CivilFX.TrafficECS {
 
                     if (currentSpeed > vehicleData.speed)
                     {
-                        currentSpeed = vehicleData.speed + 2;
+                        currentSpeed = vehicleData.speed + 1;
                     }
                     //clamp speed
                     currentSpeed = math.clamp(currentSpeed, 0, currentPath.maxSpeed);
@@ -313,7 +313,7 @@ namespace CivilFX.TrafficECS {
                     vehicleData.speed = currentSpeed;
                     vehicleData.currentPos = vehicleData.currentPos + currentSpeed;
                     vehicleData.location = currentPath.pathNodes[vehicleData.currentPos];
-                    vehicleData.lookAtLocation = vehicleData.currentPos < currentPath.nodesCount - currentPath.maxSpeed ? currentPath.pathNodes[vehicleData.currentPos + currentPath.maxSpeed] : vehicleData.lookAtLocation;
+                    vehicleData.lookAtLocation = vehicleData.currentPos < currentPath.nodesCount - currentPath.maxSpeed ? currentPath.pathNodes[vehicleData.currentPos + currentPath.maxSpeed] : vehicleData.location;
 
                     //assign value back
                     chunkVehicles[i] = vehicleData;
@@ -402,8 +402,10 @@ namespace CivilFX.TrafficECS {
                     chunkTranslation[i] = new Translation { Value = vehicleData.location };
 
                     //set rotation
-                    chunkRotation[i] = new Rotation { Value = quaternion.LookRotation(vehicleData.lookAtLocation - vehicleData.location, new float3(0, 1, 0)) };
-
+                    if (!vehicleData.lookAtLocation.Equals(vehicleData.location))
+                    {
+                        chunkRotation[i] = new Rotation { Value = quaternion.LookRotation(vehicleData.lookAtLocation - vehicleData.location, new float3(0, 1, 0)) };
+                    }
                     //add info to hashmap
                     map.Add(vehicleData.currentPathID, new VehiclePosition { pos = vehicleData.currentPos, length = vehicleData.length });
                 }

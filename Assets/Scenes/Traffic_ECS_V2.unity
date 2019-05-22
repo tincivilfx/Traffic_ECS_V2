@@ -1087,8 +1087,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_LocalRotation: {x: -0.36757785, y: -0.42133126, z: 0.19226171, w: -0.80647504}
-  m_LocalPosition: {x: -80.41161, y: 94.43435, z: -541.71136}
+  m_LocalRotation: {x: 0.2315728, y: -0.556445, z: 0.16487868, w: 0.78074193}
+  m_LocalPosition: {x: -2.689847, y: 41.839813, z: -470.8325}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -1274,7 +1274,7 @@ MonoBehaviour:
   path: {fileID: 11400000, guid: faa7704628eef1049b1405e18d9507cf, type: 2}
   type: 1
   startNode: 6646
-  endNode: 10840
+  endNode: 9691
   node: 9500
 --- !u!1 &1172509095
 GameObject:
@@ -1306,7 +1306,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1bfa7d0bea55ed042bcb0c65f84fe944, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  totalVehicles: 2
+  totalVehicles: 20
   vehiclesCollector: {fileID: 11400000, guid: cfbb0e914d21c9049a609eec8b95d7cb, type: 2}
   pathsCollector: {fileID: 11400000, guid: c7e87a85f28d4e0409717572c7e4407f, type: 2}
   signalControllers: []

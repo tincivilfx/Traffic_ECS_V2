@@ -20,18 +20,14 @@ namespace CivilFX.TrafficECS
 
 
 
-        void Start()
+        void Awake()
         {
-
+            trafficSystem = World.Active.GetOrCreateSystem<TrafficSystem>();
         }
 
         // Update is called once per frame
         private void FixedUpdate()
         {
-            if (trafficSystem == null)
-            {
-                trafficSystem = World.Active.GetOrCreateSystem<TrafficSystem>();
-            }
             trafficSystem.Update();
         }
     }
