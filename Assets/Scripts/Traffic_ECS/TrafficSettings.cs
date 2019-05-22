@@ -147,13 +147,14 @@ namespace CivilFX.TrafficECS
                         linkedDataPtr[linkedCount - 1].connectingNode = currentPath.connectingPaths[0].startNode;
                         linkedDataPtr[linkedCount - 1].transitionNode = currentPath.connectingPaths[0].transitionNode;
                         linkedDataPtr[linkedCount - 1].linkedID = currentPath.connectingPaths[0].turnedPath.id;
+                        linkedDataPtr[linkedCount - 1].chance = 255;
 
                         //add merging entity
                         var pathMergeEntity = conversionSystem.CreateAdditionalEntity(this);
                         var mergeData = new PathMerge
                         {
-                            id = currentPath.connectingPaths[0].turnedPath.id,
-                            linkedID = currentPath.id,
+                            id = currentPath.id,
+                            linkedID = currentPath.connectingPaths[0].turnedPath.id,
                             startScanPos = currentPath.connectingPaths[0].startScanNode,
                             endScanPos = currentPath.connectingPaths[0].endScanNode,
                             stopPos = currentPath.connectingPaths[0].yieldNode

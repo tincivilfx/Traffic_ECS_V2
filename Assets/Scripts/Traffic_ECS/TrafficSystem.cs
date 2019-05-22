@@ -10,6 +10,7 @@ using Unity.Transforms;
 
 namespace CivilFX.TrafficECS
 {
+    [DisableAutoCreation] //fixed timestep workaround
     [UpdateAfter(typeof(SpawnVehicleSystem))]
     [AlwaysUpdateSystem]
     public partial class TrafficSystem : JobComponentSystem
@@ -29,6 +30,7 @@ namespace CivilFX.TrafficECS
         EntityQuery pathEntities;
         EntityQuery vehicleBodidesEntities;
         EntityQuery vehicleWheelsEntities;
+        EntityQuery pathMergingEntities;
         #endregion
 
         protected override void OnCreate()
@@ -43,6 +45,7 @@ namespace CivilFX.TrafficECS
             //cache references to paths data
             pathEntities = GetEntityQuery(ComponentType.ReadOnly(typeof(Path)));
             paths = pathEntities.ToComponentDataArray<Path>(Allocator.Persistent);
+            pathMergingEntities = GetEntityQuery(ComponentType.ReadOnly(typeof(PathMerge)));
 
             //cache entities
             vehicleBodidesEntities = GetEntityQuery(typeof(VehicleBodyMoveAndRotate));
@@ -125,15 +128,23 @@ namespace CivilFX.TrafficECS
                 return OneTimeSetup(inputDeps);
             }
 
-            //job to check for merging
             NativeArray<VehicleBodyMoveAndRotate> vehicleBodies = GetEntityQuery(ComponentType.ReadOnly(typeof(VehicleBodyMoveAndRotate))).ToComponentDataArray<VehicleBodyMoveAndRotate>(Allocator.TempJob, out JobHandle job);
+
+            //job to check for merging
+            var mergeType = GetArchetypeChunkComponentType<PathMerge>(true);
+            JobHandle resolveMergingJob = new ResolveMergingForPath
+            {
+                pathMergeType = mergeType,
+                paths = paths
+            }.Schedule(pathMergingEntities, JobHandle.CombineDependencies(job, inputDeps));
+           
             //job to get the next position in the path
             var bodyType = GetArchetypeChunkComponentType<VehicleBodyMoveAndRotate>(false);
             JobHandle resolveNextNodeJob = new ResolveNextPositionForVehicleJob
             {
                 vehicleBodyType = bodyType,
                 paths = paths,
-            }.Schedule(vehicleBodidesEntities, JobHandle.CombineDependencies(job, inputDeps));
+            }.Schedule(vehicleBodidesEntities, resolveMergingJob);
 
             //***********************************************
 
