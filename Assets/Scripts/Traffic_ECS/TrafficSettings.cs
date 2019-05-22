@@ -115,24 +115,54 @@ namespace CivilFX.TrafficECS
 
                 //populate linked count
                 byte linkedCount = 0;
+
+                //add splitting paths count
+                linkedCount += currentPath.splittingPaths == null ? (byte)0 : (byte)currentPath.splittingPaths.Count;
+                //add connecting (merging) paths count
+                linkedCount += currentPath.connectingPaths == null ? (byte)0 : (byte)currentPath.connectingPaths.Count;
+
                 CustomMemoryManager<PathLinkedData> linkedData = new CustomMemoryManager<PathLinkedData>();
                 unsafeMemoryReferences.Add(linkedData);
 
-                if (currentPath.splittingPaths != null && currentPath.splittingPaths.Count > 0)
+                if (linkedCount > 0)
                 {
-                    linkedData.AllocateMemory(currentPath.splittingPaths.Count, 32, Allocator.Persistent);
+                    linkedData.AllocateMemory(linkedCount, 32, Allocator.Persistent);
                     var linkedDataPtr = linkedData.GetPointer();
 
-                    for (int j = 0; j < currentPath.splittingPaths.Count; j++)
-                    {
-                        linkedDataPtr[j].chance = (byte)currentPath.splittingPaths[j].turnedChance;
-                        linkedDataPtr[j].connectingNode = currentPath.splittingPaths[j].startNode;
-                        linkedDataPtr[j].transitionNode = currentPath.splittingPaths[j].transitionNode;
-                        linkedDataPtr[j].linkedID = currentPath.splittingPaths[j].turnedPath.id;
+                    //add splitting paths
+                    if (currentPath.splittingPaths != null)
+                    {                   
+                        for (int j = 0; j < currentPath.splittingPaths.Count; j++)
+                        {
+                            linkedDataPtr[j].chance = (byte)currentPath.splittingPaths[j].turnedChance;
+                            linkedDataPtr[j].connectingNode = currentPath.splittingPaths[j].startNode;
+                            linkedDataPtr[j].transitionNode = currentPath.splittingPaths[j].transitionNode;
+                            linkedDataPtr[j].linkedID = currentPath.splittingPaths[j].turnedPath.id;
+                        }
                     }
+
+                    //add merging path
+                    if (currentPath.connectingPaths != null && currentPath.connectingPaths.Count == 1)
+                    {
+                        linkedDataPtr[linkedCount - 1].connectingNode = currentPath.connectingPaths[0].startNode;
+                        linkedDataPtr[linkedCount - 1].transitionNode = currentPath.connectingPaths[0].transitionNode;
+                        linkedDataPtr[linkedCount - 1].linkedID = currentPath.connectingPaths[0].turnedPath.id;
+
+                        //add merging entity
+                        var pathMergeEntity = conversionSystem.CreateAdditionalEntity(this);
+                        var mergeData = new PathMerge
+                        {
+                            id = currentPath.connectingPaths[0].turnedPath.id,
+                            linkedID = currentPath.id,
+                            startScanPos = currentPath.connectingPaths[0].startScanNode,
+                            endScanPos = currentPath.connectingPaths[0].endScanNode,
+                            stopPos = currentPath.connectingPaths[0].yieldNode
+                        };
+                        dstManager.AddComponentData(pathMergeEntity, mergeData);
+                    }
+
+                    
                 }
-
-
                 //create ecs data
                 var pathData = new Path
                 {
@@ -169,7 +199,8 @@ namespace CivilFX.TrafficECS
                     var signalSetPtr = signalSetMem.GetPointer();
 
                     for (int j = 0; j < signal.sets.Length; j++)
-                    {                    //allocate memory for pathsIDs
+                    {   
+                        //allocate memory for pathsIDs
                         CustomMemoryManager<byte> pathsIDsMem = new CustomMemoryManager<byte>();
                         pathsIDsMem.AllocateMemory(signal.sets[j].bakedPaths.Length);
                         var pathsIDsMemPTr = pathsIDsMem.GetPointer();
@@ -199,7 +230,8 @@ namespace CivilFX.TrafficECS
                     CustomMemoryManager<SignalFrame> signalFrameMem = new CustomMemoryManager<SignalFrame>();
                     signalFrameMem.AllocateMemory(signal.sequence.sequences.Length);
                     var signalFramePtr = signalFrameMem.GetPointer();
-                    
+                    unsafeMemoryReferences.Add(signalFrameMem);
+
                     for (int j=0; j<signal.sequence.sequences.Length; j++)
                     {
                         signalFramePtr[j].time = signal.sequence.sequences[j].time;

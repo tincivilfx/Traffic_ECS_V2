@@ -81,7 +81,7 @@ namespace CivilFX.TrafficECS
             //assign vehicle to each path along with the position
             for (int i = 0; i < paths.Length; i++)
             {
-                Debug.Log(vehiclesCounts[i]);
+                //Debug.Log(vehiclesCounts[i]);
                 for (int j=0; j<vehiclesCounts[i]; j++)
                 {
                     if (currentVehicleCount >= vehicles.Length)
@@ -112,7 +112,7 @@ namespace CivilFX.TrafficECS
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            //skip to next frame to make sure all the vehicles are initialized
+            //skip to next frames to make sure all the vehicles are initialized
             if (framesToSkip > 0)
             {
                 framesToSkip--;
@@ -125,17 +125,21 @@ namespace CivilFX.TrafficECS
                 return OneTimeSetup(inputDeps);
             }
 
+            //job to check for merging
+            NativeArray<VehicleBodyMoveAndRotate> vehicleBodies = GetEntityQuery(ComponentType.ReadOnly(typeof(VehicleBodyMoveAndRotate))).ToComponentDataArray<VehicleBodyMoveAndRotate>(Allocator.TempJob, out JobHandle job);
+            //job to get the next position in the path
             var bodyType = GetArchetypeChunkComponentType<VehicleBodyMoveAndRotate>(false);
             JobHandle resolveNextNodeJob = new ResolveNextPositionForVehicleJob
             {
                 vehicleBodyType = bodyType,
                 paths = paths,
-            }.Schedule(vehicleBodidesEntities, inputDeps);
+            }.Schedule(vehicleBodidesEntities, JobHandle.CombineDependencies(job, inputDeps));
 
             //***********************************************
 
 
-            //schedule clear paths occupancy
+            //job to clear paths occupancy
+            //only clear vehicle mode
             var pathType = GetArchetypeChunkComponentType<Path>(false);
             JobHandle clearPathsJob = new ClearPathsOccupancyJob
             {
@@ -144,21 +148,21 @@ namespace CivilFX.TrafficECS
 
             //***********************************************
 
-            NativeMultiHashMap<int, VehiclePosition> hashMap = new NativeMultiHashMap<int, VehiclePosition>(10000, Allocator.TempJob);
-            //schedule move vehicle job
+            //job to move vehicle job
+            //also fill the hashmap
+            NativeMultiHashMap<int, VehiclePosition> hashMap = new NativeMultiHashMap<int, VehiclePosition>(10000, Allocator.TempJob);   
             var rotationType = GetArchetypeChunkComponentType<Rotation>(false);
             var translationType = GetArchetypeChunkComponentType<Translation>(false);
             JobHandle moveVehicleJob = new MoveVehicleBodyJob
             {
-                commandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
                 map = hashMap.ToConcurrent(),
                 vehicleRotationType = rotationType,
                 vehicletranslateType = translationType,
                 vehicleBodyType = bodyType
             }.Schedule(vehicleBodidesEntities, clearPathsJob);
-            moveVehicleJob.Complete();
+            //moveVehicleJob.Complete();
 
-            NativeArray<VehicleBodyMoveAndRotate> vehicleBodies = GetEntityQuery(ComponentType.ReadOnly(typeof(VehicleBodyMoveAndRotate))).ToComponentDataArray<VehicleBodyMoveAndRotate>(Allocator.TempJob, out moveVehicleJob);
+            
             //schedule move wheel job
             var wheelType = GetArchetypeChunkComponentType<VehicleWheelMoveAndRotate>(false);
             var wheelLocationType = GetArchetypeChunkComponentType<LocalToWorld>(false);
@@ -181,12 +185,10 @@ namespace CivilFX.TrafficECS
             }.Schedule(pathEntities, moveVehicleJob);
 
             fillPathOccupancy.Complete();
-            moveVehicleWheelJob.Complete();
             hashMap.Dispose();
-            vehicleBodies.Dispose();
 
 
-            return fillPathOccupancy;
+            return JobHandle.CombineDependencies( fillPathOccupancy, moveVehicleWheelJob);
         }
 
         protected override void OnDestroyManager()

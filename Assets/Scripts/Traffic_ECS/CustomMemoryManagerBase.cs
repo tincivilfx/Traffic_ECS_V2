@@ -44,6 +44,7 @@ namespace CivilFX.TrafficECS
             catch (Exception ex)
             {
                 //Debug.LogError("Failed to allocate memory: " + ex.Message);
+                throw ex;
             }
         }
 

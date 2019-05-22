@@ -61,17 +61,24 @@ namespace CivilFX.TrafficECS
 
         [NativeDisableUnsafePtrRestriction]
         public byte* occupied;
-
-        
+      
         [NativeDisableUnsafePtrRestriction]
-        public PathLinkedData* linked; 
-        
+        public PathLinkedData* linked;       
+    }
+
+    public unsafe struct PathMerge : IComponentData
+    {
+        public byte id;
+        public byte linkedID;
+        public int startScanPos;
+        public int endScanPos;
+        public int stopPos;
     }
 
     //used to controll an intersection
     public unsafe struct TrafficSignalNode : IComponentData
     {
-        public byte currentIndex;
+        public byte currentFrameIndex;
         public byte setsCount;
         public byte sequenceCount;
         public float currentTime;

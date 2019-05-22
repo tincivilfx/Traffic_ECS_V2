@@ -12,13 +12,15 @@ using Unity.Burst;
 
 namespace CivilFX.TrafficECS
 {
-    [UpdateAfter(typeof(TrafficSettings))]
+    [UpdateAfter(typeof(TrafficSystem))]
     public class TrafficSignalSystem : JobComponentSystem
     {
 
         private EntityQuery signalEntities;
 
         private NativeArray<Path> paths;
+
+        private bool isInit;
 
         protected override void OnCreate()
         {
@@ -27,23 +29,23 @@ namespace CivilFX.TrafficECS
             paths = pathEntities.ToComponentDataArray<Path>(Allocator.Persistent);
         }
 
-        //[BurstCompile]
-        public struct SignalControllJob : IJobChunk
+        //one time job to enable stop cell on every path
+        [BurstCompile]
+        public unsafe struct SignalControlInitJob : IJobChunk
         {
-            public float deltaTime;
             public ArchetypeChunkComponentType<TrafficSignalNode> signalNodeType;
             public NativeArray<Path> paths;
-            public unsafe void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
-                /*
                 var chunksignalNode = chunk.GetNativeArray(signalNodeType);
-                for (int i=0; i<chunk.Count; i++)
+                for (int i = 0; i < chunk.Count; i++)
                 {
                     var signalNode = chunksignalNode[i];
-                    for (int j=0; j<signalNode.setsCount; j++)
+                    for (int j = 0; j < signalNode.setsCount; j++)
                     {
                         for (int k = 0; k < signalNode.sets[j].pathsCount; k++)
-                        {                        
+                        {
                             for (int l = 0; l < paths.Length; l++)
                             {
                                 var path = Path.Null;
@@ -57,18 +59,62 @@ namespace CivilFX.TrafficECS
                             }
                         }
                     }
-
                 }
-                */
+            }
+        }
+
+        [BurstCompile]
+        public struct SignalControllJob : IJobChunk
+        {
+            public float deltaTime;
+            public ArchetypeChunkComponentType<TrafficSignalNode> signalNodeType;
+            public NativeArray<Path> paths;
+            public unsafe void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+            {               
                 var chunksignalNode = chunk.GetNativeArray(signalNodeType);
                 for (int i = 0; i < chunk.Count; i++)
                 {
                     var signalNode = chunksignalNode[i];
-                    signalNode.currentTime -= deltaTime;
+                    signalNode.currentTime = signalNode.currentTime - deltaTime;
+                    //Debug.Log(signalNode.currentTime);
                     if (signalNode.currentTime <= 0)
                     {
-                       
+                        //get current frame in the sequence
+                        var frame = signalNode.sequence[signalNode.currentFrameIndex];
+
+                        //get the set based on the frame ID
+                        var set = signalNode.sets[frame.setID];
+
+                        //handle this frame
+                        for (int j=0; j<set.pathsCount; j++)
+                        {
+                            for (int k=0; k<paths.Length; k++)
+                            {
+                                if (paths[k].id == set.pathIDs[j] && paths[k].type == frame.type)
+                                {                                 
+                                    //set occupied
+                                    var lvalue = paths[k].occupied[set.stopPoses[j]];
+                                    lvalue = TrafficSystem.SetOccupied(lvalue, !frame.active, TrafficSystem.OccupiedType.TrafficSignal);
+                                    paths[k].occupied[set.stopPoses[j]] = lvalue;
+                                    break;
+                                }
+                            }
+                        }
+
+                        //set
+                        signalNode.elapsedTime = frame.time;
+                        signalNode.currentFrameIndex = (byte)(signalNode.currentFrameIndex + 1);
+                        if (signalNode.currentFrameIndex < signalNode.sequenceCount)
+                        {
+                            signalNode.currentTime = signalNode.sequence[signalNode.currentFrameIndex].time - signalNode.elapsedTime;
+                        } else
+                        {
+                            signalNode.currentFrameIndex = 0;
+                            signalNode.elapsedTime = signalNode.sequence[0].time;
+                            signalNode.currentTime = signalNode.elapsedTime;
+                        }
                     }
+                    chunksignalNode[i] = signalNode;
                 }
             }
         }
@@ -85,6 +131,21 @@ namespace CivilFX.TrafficECS
             }
 
             var signalType = GetArchetypeChunkComponentType<TrafficSignalNode>(false);
+
+            if (!isInit)
+            {
+
+                var signalOneTimeJob = new SignalControlInitJob
+                {
+                    signalNodeType = signalType,
+                    paths = paths
+                }.Schedule(signalEntities, inputDeps);
+
+                isInit = true;
+
+                return signalOneTimeJob;
+            }
+
             var signalJob = new SignalControllJob
             {
                 deltaTime = Time.deltaTime,

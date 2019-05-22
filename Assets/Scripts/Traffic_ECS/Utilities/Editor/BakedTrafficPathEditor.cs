@@ -212,7 +212,7 @@ namespace CivilFX.TrafficECS
                             EditorGUILayout.TextField(new GUIContent("Actual Speed Limit: "), serializedObject.FindProperty("actualSpeedLimit").intValue.ToString());
                         }
 
-                    } else if (property.propertyPath.Equals("pathType"))
+                    } else if (property.propertyPath.Equals("type"))
                     {
                         using (new EditorGUI.DisabledScope(false))
                         {

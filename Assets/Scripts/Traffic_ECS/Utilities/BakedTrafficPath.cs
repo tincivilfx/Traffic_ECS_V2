@@ -31,9 +31,6 @@ namespace CivilFX.TrafficECS
         [SerializeField]
         private List<Vector3> pathNodes;
 
-        [SerializeField]
-        private BakedPathType pathType;
-
         [HideInInspector]
         [SerializeField]
         private string filePath;
@@ -42,6 +39,7 @@ namespace CivilFX.TrafficECS
         [HideInInspector]
         public int actualSpeedLimit;
 
+        public TrafficPathType type;
         #region properties
         public List<Vector3> PathNodes
         {
@@ -60,12 +58,6 @@ namespace CivilFX.TrafficECS
             set { filePath = value; }
         }
 
-        public BakedPathType PathType
-        {
-            get { return pathType; }
-            set { pathType = value; }
-        }
-
         #endregion
 
         [HideInInspector]
@@ -76,7 +68,7 @@ namespace CivilFX.TrafficECS
         public List<BakedTrafficPathTurnedInfo> splittingPaths;
 
         [Header("List of connecting paths:")]
-        public List<BakedTrafficPathTurnedInfo> connectingPaths;
+        public List<BakedTrafficPathMergedInfo> connectingPaths;
 
         [Header("List of merge paths:")]
         public BakedTrafficPath leftPath;
@@ -115,7 +107,6 @@ namespace CivilFX.TrafficECS
         [HideInInspector]
         public byte id;
 
-        public TrafficPathType type;
 
         #endregion
 
@@ -187,4 +178,16 @@ namespace CivilFX.TrafficECS
         public int startNode;
         public int turnedChance;
     }
+
+    [System.Serializable]
+    public class BakedTrafficPathMergedInfo
+    {
+        public BakedTrafficPath turnedPath;
+        public int transitionNode;
+        public int startNode;
+        public int startScanNode;
+        public int endScanNode;
+        public int yieldNode;
+    }
+
 }

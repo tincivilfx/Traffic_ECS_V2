@@ -17,12 +17,13 @@ namespace CivilFX.TrafficECS {
         public enum OccupiedType
         {
             Vehicle,
-            TrafficSignal
+            TrafficSignal,
+            YieldMerging
         }
 
         public static readonly byte VEHICLE_OCCUPIED_BIT = 1;
         public static readonly byte TRAFFIC_SIGNAL_OCCUPIED_BIT = 2;
-        public static readonly byte YIELD_OCCUPIED_BIT = 4;
+        public static readonly byte YIELD_FOR_MERGING_OCCUPIED_BIT = 4;
 
         public static float Map(float value, float lowerLimit, float uperLimit, float lowerValue, float uperValue)
         {
@@ -53,6 +54,16 @@ namespace CivilFX.TrafficECS {
                         value = (byte)(value & (~TRAFFIC_SIGNAL_OCCUPIED_BIT));
                     }
                     break;
+                case OccupiedType.YieldMerging:
+                    if (occupied)
+                    {
+                        value = (byte)(value | YIELD_FOR_MERGING_OCCUPIED_BIT);
+                    }
+                    else
+                    {
+                        value = (byte)(value & (~YIELD_FOR_MERGING_OCCUPIED_BIT));
+                    }
+                    break;
             }
             return value;
         }
@@ -67,6 +78,8 @@ namespace CivilFX.TrafficECS {
                     return (value & VEHICLE_OCCUPIED_BIT) != 0;
                 case OccupiedType.TrafficSignal:
                     return (value & TRAFFIC_SIGNAL_OCCUPIED_BIT) != 0;
+                case OccupiedType.YieldMerging:
+                    return (value & YIELD_FOR_MERGING_OCCUPIED_BIT) != 0;
             }
             return true;
         }
@@ -93,25 +106,66 @@ namespace CivilFX.TrafficECS {
                         vehicleData.currentPathID = data.pathID;
                         vehicleData.currentPos = data.pos;
                         chunkVehicles[i] = vehicleData;
-
-                        /*
-                        chunkVehicles[i] = new VehicleBodyMoveAndRotate
-                        {
-                            waiting = vehicleData.waiting,
-                            length = vehicleData.length,
-                            speed = vehicleData.speed,
-                            id = vehicleData.id,
-                            currentPathID = data.pathID,
-                            currentPos = data.pos,
-                            location = vehicleData.location,
-                            lookAtLocation = vehicleData.lookAtLocation
-                        };
-                        */
                     }
                 }
 
             }
         }
+
+
+
+        public struct ResolveMergingForPath : IJobChunk
+        {
+            [ReadOnly] public NativeArray<Path> paths;
+            [ReadOnly] public ArchetypeChunkComponentType<PathMerge> pathMergeType;
+            
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+            {
+                var mergeChunk = chunk.GetNativeArray(pathMergeType);
+                
+                for (int i=0; i<chunk.Count; i++)
+                {
+                    var mergePath = mergeChunk[i];
+
+                    var mainPathToCheck = Path.Null;
+                    var mainPath = Path.Null;
+
+                    //get the main path to check for occupancy
+                    for (int j=0; j<paths.Length; j++)
+                    {
+                        if (mergePath.linkedID == paths[j].id)
+                        {
+                            mainPathToCheck = paths[j];
+                        }
+                    }
+
+                    //get the main path to set occupancy
+                    for (int j = 0; j < paths.Length; j++)
+                    {
+                        if (mergePath.id == paths[j].id)
+                        {
+                            mainPath = paths[j];
+                        }
+                    }
+
+                    byte lvalue = 0;
+                    for (int j=mergePath.startScanPos; j<mergePath.endScanPos; j++)
+                    {
+                        lvalue |= mainPathToCheck.occupied[j];
+                    }
+
+                    if (CheckOccupied(lvalue, OccupiedType.Vehicle))
+                    {
+                        lvalue = SetOccupied(mainPath.occupied[mergePath.stopPos], true, OccupiedType.YieldMerging);
+                    } else
+                    {
+                        lvalue = SetOccupied(mainPath.occupied[mergePath.stopPos], false, OccupiedType.YieldMerging);
+                    }
+                    mainPath.occupied[mergePath.stopPos] = lvalue;                
+                }
+            }
+        }
+
 
         [BurstCompile]
         public struct ResolveNextPositionForVehicleJob : IJobChunk
@@ -160,7 +214,8 @@ namespace CivilFX.TrafficECS {
                     var next = scanDis;
                     for (int j = 1; j < scanDis; j++)
                     {
-                        if (CheckOccupied(currentPath.occupied[frontPos + j], OccupiedType.Vehicle) || CheckOccupied(currentPath.occupied[frontPos + j], OccupiedType.TrafficSignal))
+                        if (CheckOccupied(currentPath.occupied[frontPos + j], OccupiedType.Vehicle) || CheckOccupied(currentPath.occupied[frontPos + j], OccupiedType.TrafficSignal) 
+                            || CheckOccupied(currentPath.occupied[frontPos + j], OccupiedType.YieldMerging))
                         {
                             next = j;
                             break;
@@ -205,10 +260,12 @@ namespace CivilFX.TrafficECS {
             }
         }
 
+        
         [BurstCompile]
         public struct FillPathsOccupancyJob : IJobChunk
         {
             public ArchetypeChunkComponentType<Path> pathType;
+
             [ReadOnly] public NativeMultiHashMap<int, VehiclePosition> map;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
@@ -244,9 +301,7 @@ namespace CivilFX.TrafficECS {
         [BurstCompile]
         public struct MoveVehicleBodyJob : IJobChunk
         {
-            public EntityCommandBuffer.Concurrent commandBuffer;
             [WriteOnly] public NativeMultiHashMap<int, VehiclePosition>.Concurrent map;
-
             [ReadOnly] public ArchetypeChunkComponentType<VehicleBodyMoveAndRotate> vehicleBodyType;
             public ArchetypeChunkComponentType<Translation> vehicletranslateType;
             public ArchetypeChunkComponentType<Rotation> vehicleRotationType;
@@ -281,6 +336,7 @@ namespace CivilFX.TrafficECS {
         {
             public float3 cameraPosition;
             public float deltaTime;
+            [DeallocateOnJobCompletion]
             [ReadOnly] public NativeArray<VehicleBodyMoveAndRotate> bodies;
             [ReadOnly] public ArchetypeChunkComponentType<VehicleWheelMoveAndRotate> vehicleWheelType;
             [ReadOnly] public ArchetypeChunkComponentType<LocalToWorld> wheelLocationType;
