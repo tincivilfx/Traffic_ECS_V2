@@ -157,11 +157,14 @@ namespace CivilFX.TrafficECS
                             linkedID = currentPath.connectingPaths[0].turnedPath.id,
                             //TODO: check for array size
                             //startScanPos = currentPath.connectingPaths[0].startScanNode,
-                            startScanPos = math.clamp(currentPath.connectingPaths[0].startScanNode == 0 ? currentPath.connectingPaths[0].startNode - (int)(currentPath.connectingPaths[0].turnedPath.PathNodes.Count * 0.061f) : currentPath.connectingPaths[0].startScanNode, 0, currentPath.connectingPaths[0].turnedPath.PathNodes.Count),
+                            startScanPos = math.clamp((currentPath.connectingPaths[0].startScanNode == 0 ? currentPath.connectingPaths[0].startNode - (int)(currentPath.connectingPaths[0].turnedPath.PathNodes.Count * 0.061f) : currentPath.connectingPaths[0].startScanNode), 0, currentPath.connectingPaths[0].turnedPath.PathNodes.Count),
                             //endScanPos = currentPath.connectingPaths[0].endScanNode,
                             endScanPos = math.clamp(currentPath.connectingPaths[0].endScanNode == 0 ? currentPath.connectingPaths[0].startNode - (int)(currentPath.connectingPaths[0].turnedPath.PathNodes.Count * 0.0133f) : currentPath.connectingPaths[0].endScanNode,0 , currentPath.connectingPaths[0].turnedPath.PathNodes.Count),
                             stopPos = currentPath.connectingPaths[0].yieldNode == 0 ? (int)(currentPath.PathNodes.Count * 0.89f) : currentPath.connectingPaths[0].yieldNode,
                         };
+                        //currentPath.connectingPaths[0].startScanNode = mergeData.startScanPos;
+                        //currentPath.connectingPaths[0].endScanNode = mergeData.endScanPos;
+                        //currentPath.connectingPaths[0].yieldNode = mergeData.stopPos;
                         dstManager.AddComponentData(pathMergeEntity, mergeData);
                     }
 

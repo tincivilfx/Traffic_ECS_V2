@@ -903,7 +903,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1bfa7d0bea55ed042bcb0c65f84fe944, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  totalVehicles: 200
+  totalVehicles: 20
   vehiclesCollector: {fileID: 11400000, guid: cfbb0e914d21c9049a609eec8b95d7cb, type: 2}
   pathsCollector: {fileID: 11400000, guid: d81f457c8df74a34e8a9e76cc0c78e91, type: 2}
   signalControllers:
@@ -1087,8 +1087,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_LocalRotation: {x: 0.2315728, y: -0.556445, z: 0.16487868, w: 0.78074193}
-  m_LocalPosition: {x: -2.689847, y: 41.839813, z: -470.8325}
+  m_LocalRotation: {x: 0.26270276, y: -0.737271, z: 0.44667843, w: 0.4334711}
+  m_LocalPosition: {x: -28.358715, y: 117.937836, z: 27.216368}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -1205,7 +1205,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nodes:
-  - {x: -47.336792, y: 10.127521, z: 8.1137085}
+  - {x: 74.697754, y: 10.127521, z: 8.1137085}
+  - {x: 65.4077, y: 10.127521, z: 8.1137085}
+  - {x: 16.264153, y: 10.127521, z: 8.1137085}
   - {x: -50.01831, y: 10.127521, z: 8.1137085}
   - {x: -59.615723, y: 10.127521, z: 8.0355835}
   - {x: -78.85217, y: 10.127521, z: 7.8792114}
@@ -1271,11 +1273,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a2bf3ee62d625c4f9ec11012b59614f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  path: {fileID: 11400000, guid: faa7704628eef1049b1405e18d9507cf, type: 2}
+  path: {fileID: 11400000, guid: c8be1838360960c45935ab3c84d85b00, type: 2}
   type: 1
-  startNode: 6646
-  endNode: 9691
-  node: 63061
+  startNode: 11590
+  endNode: 13267
+  node: 35154
 --- !u!1 &1172509095
 GameObject:
   m_ObjectHideFlags: 0
@@ -1651,10 +1653,9 @@ MonoBehaviour:
   pathCount: 0
   useOneResolutionForAll: 0
   resolution: 0
-  savedLocation: Assets/TrafficAssets/Merging
+  savedLocation: Assets/TrafficAssets
   paths:
-  - {fileID: 1223732792}
-  - {fileID: 945410847}
+  - {fileID: 1061926579}
   doBakeWhenPlaying: 0
   exitPlayMode: 0
 --- !u!4 &1659966385

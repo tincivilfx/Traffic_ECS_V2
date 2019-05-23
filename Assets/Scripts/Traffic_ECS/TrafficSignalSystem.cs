@@ -142,7 +142,6 @@ namespace CivilFX.TrafficECS
                 }.Schedule(signalEntities, inputDeps);
 
                 isInit = true;
-
                 return signalOneTimeJob;
             }
 
@@ -159,5 +158,9 @@ namespace CivilFX.TrafficECS
         {
             paths.Dispose();
         }
+
+
+        
+
     }
 }
