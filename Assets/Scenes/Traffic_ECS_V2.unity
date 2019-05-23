@@ -890,7 +890,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &922602427
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -903,7 +903,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1bfa7d0bea55ed042bcb0c65f84fe944, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  totalVehicles: 10000
+  totalVehicles: 200
   vehiclesCollector: {fileID: 11400000, guid: cfbb0e914d21c9049a609eec8b95d7cb, type: 2}
   pathsCollector: {fileID: 11400000, guid: d81f457c8df74a34e8a9e76cc0c78e91, type: 2}
   signalControllers:
@@ -1275,7 +1275,7 @@ MonoBehaviour:
   type: 1
   startNode: 6646
   endNode: 9691
-  node: 9500
+  node: 63061
 --- !u!1 &1172509095
 GameObject:
   m_ObjectHideFlags: 0
@@ -1293,7 +1293,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1172509096
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1456,6 +1456,11 @@ MonoBehaviour:
   - {x: -32.469604, y: 10.127565, z: -362.86624}
   - {x: -32.469604, y: 10.127559, z: -306.37903}
   - {x: -32.469604, y: 10.12755, z: -235.89386}
+  - {x: -30.554695, y: 10.12755, z: -109.3676}
+  - {x: -30.534079, y: 10.12755, z: -25.375137}
+  - {x: -37.323856, y: 10.12755, z: -0.08238459}
+  - {x: -57.432545, y: 10.12755, z: 8.054472}
+  - {x: -63.630344, y: 10.12755, z: 1.8802943}
   pathSpeedMPH: 40
   pathName: 
   smartTraffic: 1

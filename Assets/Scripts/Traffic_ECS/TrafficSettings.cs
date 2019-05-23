@@ -155,9 +155,12 @@ namespace CivilFX.TrafficECS
                         {
                             id = currentPath.id,
                             linkedID = currentPath.connectingPaths[0].turnedPath.id,
-                            startScanPos = currentPath.connectingPaths[0].startScanNode,
-                            endScanPos = currentPath.connectingPaths[0].endScanNode,
-                            stopPos = currentPath.connectingPaths[0].yieldNode
+                            //TODO: check for array size
+                            //startScanPos = currentPath.connectingPaths[0].startScanNode,
+                            startScanPos = math.clamp(currentPath.connectingPaths[0].startScanNode == 0 ? currentPath.connectingPaths[0].startNode - (int)(currentPath.connectingPaths[0].turnedPath.PathNodes.Count * 0.061f) : currentPath.connectingPaths[0].startScanNode, 0, currentPath.connectingPaths[0].turnedPath.PathNodes.Count),
+                            //endScanPos = currentPath.connectingPaths[0].endScanNode,
+                            endScanPos = math.clamp(currentPath.connectingPaths[0].endScanNode == 0 ? currentPath.connectingPaths[0].startNode - (int)(currentPath.connectingPaths[0].turnedPath.PathNodes.Count * 0.0133f) : currentPath.connectingPaths[0].endScanNode,0 , currentPath.connectingPaths[0].turnedPath.PathNodes.Count),
+                            stopPos = currentPath.connectingPaths[0].yieldNode == 0 ? (int)(currentPath.PathNodes.Count * 0.89f) : currentPath.connectingPaths[0].yieldNode,
                         };
                         dstManager.AddComponentData(pathMergeEntity, mergeData);
                     }
