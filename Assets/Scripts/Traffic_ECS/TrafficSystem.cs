@@ -130,15 +130,6 @@ namespace CivilFX.TrafficECS
 
             NativeArray<VehicleBodyMoveAndRotate> vehicleBodies = GetEntityQuery(ComponentType.ReadOnly(typeof(VehicleBodyMoveAndRotate))).ToComponentDataArray<VehicleBodyMoveAndRotate>(Allocator.TempJob, out JobHandle job);
 
-            /*
-            //job to check for merging
-            var mergeType = GetArchetypeChunkComponentType<PathMerge>(true);
-            JobHandle resolveMergingJob = new ResolveMergingForPath
-            {
-                pathMergeType = mergeType,
-                paths = paths
-            }.Schedule(pathMergingEntities, JobHandle.CombineDependencies(job, inputDeps));
-           */
 
             //job to get the next position in the path
             var bodyType = GetArchetypeChunkComponentType<VehicleBodyMoveAndRotate>(false);
