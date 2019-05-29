@@ -903,7 +903,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1bfa7d0bea55ed042bcb0c65f84fe944, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  totalVehicles: 100
+  totalVehicles: 1
   vehiclesCollector: {fileID: 11400000, guid: cfbb0e914d21c9049a609eec8b95d7cb, type: 2}
   pathsCollector: {fileID: 11400000, guid: d81f457c8df74a34e8a9e76cc0c78e91, type: 2}
   signalControllers:
@@ -1240,6 +1240,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1107684484}
   - component: {fileID: 1107684485}
+  - component: {fileID: 1107684486}
   m_Layer: 0
   m_Name: PathVisuzlier
   m_TagString: Untagged
@@ -1278,6 +1279,18 @@ MonoBehaviour:
   startNode: 11590
   endNode: 13267
   node: 35154
+--- !u!114 &1107684486
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1107684483}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4130b2fc9e8586349a1191d7f9435a8b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1172509095
 GameObject:
   m_ObjectHideFlags: 0

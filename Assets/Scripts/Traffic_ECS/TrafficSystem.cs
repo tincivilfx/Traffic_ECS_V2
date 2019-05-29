@@ -7,6 +7,7 @@ using Unity.Mathematics;
 using Unity.Jobs;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Transforms;
+using Unity.Rendering;
 
 namespace CivilFX.TrafficECS
 {
@@ -17,7 +18,7 @@ namespace CivilFX.TrafficECS
     {
 
         private NativeArray<Path> paths;
-        
+
         private bool isDoneSetup;
         BeginInitializationEntityCommandBufferSystem m_EntityCommandBufferSystem;
 
@@ -61,13 +62,13 @@ namespace CivilFX.TrafficECS
             NativeHashMap<int, VehicleInitData> hashMap = new NativeHashMap<int, VehicleInitData>(1000, Allocator.TempJob);
 
             //get the total of nodes of all paths
-            for (int i=0; i<paths.Length; i++)
+            for (int i = 0; i < paths.Length; i++)
             {
                 totalNodes += (ulong)paths[i].nodesCount;
             }
 
             //get the percentage of vehicles on a single path
-            for (int i= 0; i<paths.Length; i++)
+            for (int i = 0; i < paths.Length; i++)
             {
                 nodesPercentage.Add(paths[i].nodesCount * 100.0f / totalNodes);
             }
@@ -80,12 +81,12 @@ namespace CivilFX.TrafficECS
             {
                 vehiclesCounts.Add(Mathf.CeilToInt(nodesPercentage[i] * vehicles.Length / 100.0f));
             }
-            
+
             //assign vehicle to each path along with the position
             for (int i = 0; i < paths.Length; i++)
             {
                 //Debug.Log(vehiclesCounts[i]);
-                for (int j=0; j<vehiclesCounts[i]; j++)
+                for (int j = 0; j < vehiclesCounts[i]; j++)
                 {
                     if (currentVehicleCount >= vehicles.Length)
                     {
@@ -121,7 +122,7 @@ namespace CivilFX.TrafficECS
                 framesToSkip--;
                 return inputDeps;
             }
-            
+
             if (!isDoneSetup)
             {
                 isDoneSetup = true;
@@ -129,13 +130,15 @@ namespace CivilFX.TrafficECS
             }
 
             NativeArray<VehicleBodyMoveAndRotate> vehicleBodies = GetEntityQuery(ComponentType.ReadOnly(typeof(VehicleBodyMoveAndRotate))).ToComponentDataArray<VehicleBodyMoveAndRotate>(Allocator.TempJob, out JobHandle job);
-
+            NativeQueue<Entity> entitiesQueue = new NativeQueue<Entity>(Allocator.TempJob);
 
             //job to get the next position in the path
             var bodyType = GetArchetypeChunkComponentType<VehicleBodyMoveAndRotate>(false);
             JobHandle resolveNextNodeJob = new ResolveNextPositionForVehicleJob
             {
                 vehicleBodyType = bodyType,
+                entityType = GetArchetypeChunkEntityType(),
+                entitiesQueue = entitiesQueue.ToConcurrent(),
                 paths = paths,
             }.Schedule(vehicleBodidesEntities, JobHandle.CombineDependencies(job, inputDeps));
 
@@ -154,7 +157,7 @@ namespace CivilFX.TrafficECS
 
             //job to move vehicle job
             //also fill the hashmap
-            NativeMultiHashMap<int, VehiclePosition> hashMap = new NativeMultiHashMap<int, VehiclePosition>(10000, Allocator.TempJob);   
+            NativeMultiHashMap<int, VehiclePosition> hashMap = new NativeMultiHashMap<int, VehiclePosition>(10000, Allocator.TempJob);
             var rotationType = GetArchetypeChunkComponentType<Rotation>(false);
             var translationType = GetArchetypeChunkComponentType<Translation>(false);
             JobHandle moveVehicleJob = new MoveVehicleBodyJob
@@ -166,7 +169,7 @@ namespace CivilFX.TrafficECS
             }.Schedule(vehicleBodidesEntities, clearPathsJob);
             //moveVehicleJob.Complete();
 
-            
+
             //schedule move wheel job
             var wheelType = GetArchetypeChunkComponentType<VehicleWheelMoveAndRotate>(false);
             var wheelLocationType = GetArchetypeChunkComponentType<LocalToWorld>(false);
@@ -179,7 +182,7 @@ namespace CivilFX.TrafficECS
                 vehicleWheelType = wheelType,
                 wheelLocationType = wheelLocationType,
             }.Schedule(vehicleWheelsEntities, moveVehicleJob);
-            
+
 
             //Schedule filljob
             JobHandle fillPathOccupancy = new FillPathsOccupancyJob
@@ -196,10 +199,20 @@ namespace CivilFX.TrafficECS
                 paths = paths
             }.Schedule(pathMergingEntities, fillPathOccupancy);
 
+            //job to hide out-of-path vehicles
+            var frozen = new Frozen { };
+            
 
             fillPathOccupancy.Complete();
             hashMap.Dispose();
-
+            moveVehicleWheelJob.Complete();
+            resolveMergingJob.Complete();
+            while (entitiesQueue.Count != 0)
+            {
+                Debug.Log("Disabled enetity");
+                EntityManager.SetEnabled(entitiesQueue.Dequeue(), false);
+            }
+            entitiesQueue.Dispose();
 
             return JobHandle.CombineDependencies(resolveMergingJob, moveVehicleWheelJob);
         }

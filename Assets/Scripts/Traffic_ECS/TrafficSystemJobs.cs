@@ -10,7 +10,8 @@ using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Transforms;
 
-namespace CivilFX.TrafficECS {
+namespace CivilFX.TrafficECS
+{
 
     public unsafe partial class TrafficSystem
     {
@@ -41,7 +42,8 @@ namespace CivilFX.TrafficECS {
                     {
                         //set bit
                         value = (byte)(value | VEHICLE_OCCUPIED_BIT);
-                    } else
+                    }
+                    else
                     {
                         //clear bit
                         value = (byte)(value & (~VEHICLE_OCCUPIED_BIT));
@@ -51,7 +53,8 @@ namespace CivilFX.TrafficECS {
                     if (occupied)
                     {
                         value = (byte)(value | TRAFFIC_SIGNAL_OCCUPIED_BIT);
-                    } else
+                    }
+                    else
                     {
                         value = (byte)(value & (~TRAFFIC_SIGNAL_OCCUPIED_BIT));
                     }
@@ -99,10 +102,10 @@ namespace CivilFX.TrafficECS {
             {
                 var chunkVehicles = chunk.GetNativeArray(vehicleBodyType);
 
-                for (int i=0; i< chunk.Count; i++)
+                for (int i = 0; i < chunk.Count; i++)
                 {
                     var vehicleData = chunkVehicles[i];
-                    
+
                     if (map.TryGetValue(vehicleData.id, out VehicleInitData data))
                     {
                         vehicleData.currentPathID = data.pathID;
@@ -120,12 +123,12 @@ namespace CivilFX.TrafficECS {
         {
             [ReadOnly] public NativeArray<Path> paths;
             [ReadOnly] public ArchetypeChunkComponentType<PathMerge> pathMergeType;
-            
+
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 var mergeChunk = chunk.GetNativeArray(pathMergeType);
-                
-                for (int i=0; i<chunk.Count; i++)
+
+                for (int i = 0; i < chunk.Count; i++)
                 {
                     var mergePath = mergeChunk[i];
 
@@ -133,7 +136,7 @@ namespace CivilFX.TrafficECS {
                     var mainPath = Path.Null;
 
                     //get the main path to check for occupancy
-                    for (int j=0; j<paths.Length; j++)
+                    for (int j = 0; j < paths.Length; j++)
                     {
                         if (mergePath.linkedID == paths[j].id)
                         {
@@ -151,7 +154,7 @@ namespace CivilFX.TrafficECS {
                     }
 
                     byte lvalue = 0;
-                    for (int j=mergePath.startScanPos; j<mergePath.endScanPos; j++)
+                    for (int j = mergePath.startScanPos; j < mergePath.endScanPos; j++)
                     {
                         lvalue |= mainPathToCheck.occupied[j];
                     }
@@ -159,11 +162,12 @@ namespace CivilFX.TrafficECS {
                     if (CheckOccupied(lvalue, OccupiedType.Vehicle))
                     {
                         lvalue = SetOccupied(mainPath.occupied[mergePath.stopPos], true, OccupiedType.YieldMerging);
-                    } else
+                    }
+                    else
                     {
                         lvalue = SetOccupied(mainPath.occupied[mergePath.stopPos], false, OccupiedType.YieldMerging);
                     }
-                    mainPath.occupied[mergePath.stopPos] = lvalue;                
+                    mainPath.occupied[mergePath.stopPos] = lvalue;
                 }
             }
         }
@@ -173,10 +177,13 @@ namespace CivilFX.TrafficECS {
         public struct ResolveNextPositionForVehicleJob : IJobChunk
         {
             public ArchetypeChunkComponentType<VehicleBodyMoveAndRotate> vehicleBodyType;
+            [ReadOnly] public ArchetypeChunkEntityType entityType;
             [ReadOnly] public NativeArray<Path> paths;
+            public NativeQueue<Entity>.Concurrent entitiesQueue;
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 var chunkVehicles = chunk.GetNativeArray(vehicleBodyType);
+                var chunkEntity = chunk.GetNativeArray(entityType);
 
                 for (int i = 0; i < chunk.Count; i++)
                 {
@@ -218,10 +225,11 @@ namespace CivilFX.TrafficECS {
 
                     //resolve next position
                     var frontPos = vehicleData.currentPos + (vehicleData.length / 2);
-                    //Debug.Log(vehicleData.id + ":" + vehicleData.currentPos + ":" + vehicleData.speed + ":" + currentPath.nodesCount);
+                    Debug.Log(vehicleData.id + ":" + vehicleData.currentPos + ":" + vehicleData.speed + ":" + currentPath.nodesCount);
+
                     if (vehicleData.currentPos + vehicleData.speed >= currentPath.nodesCount)
                     {
-                        //Debug.Log("Reach end");
+                        Debug.Log("Reach end");
                         //this vehicle is at the end of this path
                         if (hasMergedPath)
                         {
@@ -232,16 +240,21 @@ namespace CivilFX.TrafficECS {
                             vehicleData.lookAtLocation = mergedPath.pathNodes[linkedData.connectingNode + mergedPath.maxSpeed];
                             chunkVehicles[i] = vehicleData;
                         }
-
                         /*
                         //hiding this vehicle
                         vehicle.waiting = true;
                         commandBuffer.AddComponent(index, entity, new Frozen { });
                         */
-                        
+
                         continue;
                     }
-
+                    Debug.Log(vehicleData.id + ":" + frontPos  + ":" + currentPath.nodesCount + vehicleData.length);
+                    if (frontPos >= currentPath.nodesCount - vehicleData.length)
+                    {
+                        Debug.Log("Reach end");
+                        entitiesQueue.Enqueue(chunkEntity[i]);
+                        continue;
+                    }
                     //check how many nodes can this vehicle move to
                     //i.e. : scan distance
 
@@ -266,7 +279,7 @@ namespace CivilFX.TrafficECS {
                     for (int j = 1; j < scanDis; j++)
                     {
                         lvalue = currentPath.occupied[frontPos + j];
-                        if (CheckOccupied(lvalue, OccupiedType.Vehicle) || CheckOccupied(lvalue, OccupiedType.TrafficSignal) 
+                        if (CheckOccupied(lvalue, OccupiedType.Vehicle) || CheckOccupied(lvalue, OccupiedType.TrafficSignal)
                             || CheckOccupied(lvalue, OccupiedType.YieldMerging))
                         {
                             hitDis = j;
@@ -317,7 +330,7 @@ namespace CivilFX.TrafficECS {
 
                     //assign value back
                     chunkVehicles[i] = vehicleData;
-                } 
+                }
             }
         }
 
@@ -329,10 +342,10 @@ namespace CivilFX.TrafficECS {
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 var chunkPath = chunk.GetNativeArray(pathType);
-                for (int i=0; i<chunk.Count; i++)
+                for (int i = 0; i < chunk.Count; i++)
                 {
                     var path = chunkPath[i];
-                    for (int j=0; j<path.nodesCount; j++)
+                    for (int j = 0; j < path.nodesCount; j++)
                     {
                         var lvalue = path.occupied[j];
                         lvalue = SetOccupied(lvalue, false, OccupiedType.Vehicle);
@@ -342,7 +355,7 @@ namespace CivilFX.TrafficECS {
             }
         }
 
-        
+
         [BurstCompile]
         public struct FillPathsOccupancyJob : IJobChunk
         {
@@ -387,14 +400,14 @@ namespace CivilFX.TrafficECS {
             [ReadOnly] public ArchetypeChunkComponentType<VehicleBodyMoveAndRotate> vehicleBodyType;
             public ArchetypeChunkComponentType<Translation> vehicletranslateType;
             public ArchetypeChunkComponentType<Rotation> vehicleRotationType;
-            
+
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 var chunkRotation = chunk.GetNativeArray(vehicleRotationType);
                 var chunkTranslation = chunk.GetNativeArray(vehicletranslateType);
                 var chunkVehicleBodyType = chunk.GetNativeArray(vehicleBodyType);
 
-                for (int i=0; i<chunk.Count; i++)
+                for (int i = 0; i < chunk.Count; i++)
                 {
                     var vehicleData = chunkVehicleBodyType[i];
 
@@ -411,7 +424,7 @@ namespace CivilFX.TrafficECS {
                 }
             }
         }
-   
+
 
         //job to rotate wheels
         //location will be handled by unity built-in system
@@ -432,7 +445,7 @@ namespace CivilFX.TrafficECS {
                 var wheelChunk = chunk.GetNativeArray(vehicleWheelType);
                 var locationChunk = chunk.GetNativeArray(wheelLocationType);
 
-                for (int i=0; i<chunk.Count; i++)
+                for (int i = 0; i < chunk.Count; i++)
                 {
                     var location = locationChunk[i];
                     if (math.distance(location.Position, cameraPosition) >= 50.0f)
@@ -441,7 +454,7 @@ namespace CivilFX.TrafficECS {
                     }
                     var body = VehicleBodyMoveAndRotate.Null;
                     //find body
-                    for (int j=0; j<bodies.Length; j++)
+                    for (int j = 0; j < bodies.Length; j++)
                     {
                         if (wheelChunk[i].id == bodies[j].id)
                         {
@@ -456,5 +469,17 @@ namespace CivilFX.TrafficECS {
             }
         }
 
+        //job to hide vehicles
+        public struct HideVehicleJob : IJobParallelForBatch
+        {
+            public NativeQueue<Entity>.Concurrent entitiesQueue;
+            public void Execute(int startIndex, int count)
+            {
+                for (int i = startIndex; i < count; i++)
+                {
+
+                }
+            }
+        }
     }
 }
