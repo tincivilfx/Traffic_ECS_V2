@@ -48,7 +48,16 @@ namespace CivilFX.TrafficECS
             pathMergingEntities = GetEntityQuery(ComponentType.ReadOnly(typeof(PathMerge)));
 
             //cache entities
-            vehicleBodidesEntities = GetEntityQuery(typeof(VehicleBodyMoveAndRotate));
+            //vehicleBodidesEntities = GetEntityQuery(typeof(VehicleBodyMoveAndRotate));
+            vehicleBodidesEntities = GetEntityQuery(new EntityQueryDesc { All = new ComponentType[] {
+                    typeof(VehicleBodyIDAndSpeed),
+                    typeof(VehicleBodyRawPosition),
+                    typeof(VehicleBodyIndexPosition),
+                    typeof(VehicleBodyPathID),
+                    typeof(VehicleBodyLength),
+                    typeof(VehicleBodyWaitingStatus)
+                }
+            });
             vehicleWheelsEntities = GetEntityQuery(typeof(VehicleWheelMoveAndRotate));
 
 
@@ -73,12 +82,14 @@ namespace CivilFX.TrafficECS
             }
 
             //get the vehicles
-            var vehicles = vehicleBodidesEntities.ToComponentDataArray<VehicleBodyMoveAndRotate>(Allocator.TempJob);
+            var vehiclesBodies = vehicleBodidesEntities.ToComponentDataArray<VehicleBodyIDAndSpeed>(Allocator.TempJob);
+            var vehiclesIndexPosition = vehicleBodidesEntities.ToComponentDataArray<VehicleBodyIndexPosition>(Allocator.TempJob);
+            var vehiclesPathID = vehicleBodidesEntities.ToComponentDataArray<VehicleBodyPathID>(Allocator.TempJob);
 
             //calculate the actual number of vehicles on a single path base on the percentage
             for (int i = 0; i < paths.Length; i++)
             {
-                vehiclesCounts.Add(Mathf.CeilToInt(nodesPercentage[i] * vehicles.Length / 100.0f));
+                vehiclesCounts.Add(Mathf.CeilToInt(nodesPercentage[i] * vehiclesBodies.Length / 100.0f));
             }
             
             //assign vehicle to each path along with the position
@@ -87,25 +98,33 @@ namespace CivilFX.TrafficECS
                 //Debug.Log(vehiclesCounts[i]);
                 for (int j=0; j<vehiclesCounts[i]; j++)
                 {
-                    if (currentVehicleCount >= vehicles.Length)
+                    if (currentVehicleCount >= vehiclesBodies.Length)
                     {
                         break;
                     }
-                    var v = vehicles[currentVehicleCount];
-                    v.currentPathID = paths[i].id;
-                    v.currentPos = j * (paths[i].nodesCount / vehiclesCounts[i]);
-                    hashMap.TryAdd(v.id, new VehicleInitData { pathID = paths[i].id, pos = v.currentPos });
+                    vehiclesIndexPosition[currentVehicleCount] = new VehicleBodyIndexPosition { value = j * (paths[i].nodesCount / vehiclesCounts[i]) };
+                    vehiclesPathID[currentVehicleCount] = new VehicleBodyPathID { value = paths[i].id };
+
+                    hashMap.TryAdd(vehiclesBodies[currentVehicleCount].id, new VehicleInitData { pathID = paths[i].id, pos = vehiclesIndexPosition[currentVehicleCount].value });
                     currentVehicleCount++;
                 }
             }
-            vehicles.Dispose();
+            vehiclesBodies.Dispose();
+            vehiclesIndexPosition.Dispose();
+            vehiclesPathID.Dispose();
 
-            var bodyType = GetArchetypeChunkComponentType<VehicleBodyMoveAndRotate>(false);
+            var bodyIDType = GetArchetypeChunkComponentType<VehicleBodyIDAndSpeed>(true); //readonly
+            var bodyPathIDType = GetArchetypeChunkComponentType<VehicleBodyPathID>();
+            var bodyIndexType = GetArchetypeChunkComponentType<VehicleBodyIndexPosition>();
+
+
             //schedule job to populate vehicles to paths
             JobHandle job = new OnetimePopulateVehicleToPathJob
             {
                 map = hashMap,
-                vehicleBodyType = bodyType
+                vehicleBodyIDType = bodyIDType,
+                vehicleBodyIndexPositionType = bodyIndexType,
+                vehicleBodyPathIDType = bodyPathIDType
             }.Schedule(vehicleBodidesEntities, inputDeps);
 
             job.Complete();
@@ -128,20 +147,25 @@ namespace CivilFX.TrafficECS
                 return OneTimeSetup(inputDeps);
             }
 
-            NativeArray<VehicleBodyMoveAndRotate> vehicleBodies = GetEntityQuery(ComponentType.ReadOnly(typeof(VehicleBodyMoveAndRotate))).ToComponentDataArray<VehicleBodyMoveAndRotate>(Allocator.TempJob, out JobHandle job);
-
+            NativeArray<VehicleBodyIDAndSpeed> bodyIDAndSpeed = GetEntityQuery(ComponentType.ReadOnly(typeof(VehicleBodyIDAndSpeed))).ToComponentDataArray<VehicleBodyIDAndSpeed>(Allocator.TempJob, out JobHandle job);
 
             //job to get the next position in the path
-            var bodyType = GetArchetypeChunkComponentType<VehicleBodyMoveAndRotate>(false);
+            var bodyIDSpeedType = GetArchetypeChunkComponentType<VehicleBodyIDAndSpeed>();
+            var bodyRawPositionType = GetArchetypeChunkComponentType<VehicleBodyRawPosition>();
+            var bodyIndexPositionType = GetArchetypeChunkComponentType<VehicleBodyIndexPosition>();
+            var bodyPathIDType = GetArchetypeChunkComponentType<VehicleBodyPathID>();
+            var bodyLengthType = GetArchetypeChunkComponentType<VehicleBodyLength>(true); //readonly
             JobHandle resolveNextNodeJob = new ResolveNextPositionForVehicleJob
             {
-                vehicleBodyType = bodyType,
+                bodyIDSpeedType = bodyIDSpeedType,
+                bodyIndexPositionType =bodyIndexPositionType,
+                bodyPathIDType = bodyPathIDType,
+                bodyRawPositionType = bodyRawPositionType,
+                bodyLengthType = bodyLengthType,
                 paths = paths,
             }.Schedule(vehicleBodidesEntities, JobHandle.CombineDependencies(job, inputDeps));
 
             //***********************************************
-
-
             //job to clear paths occupancy
             //only clear vehicle mode
             var pathType = GetArchetypeChunkComponentType<Path>(false);
@@ -151,42 +175,52 @@ namespace CivilFX.TrafficECS
             }.Schedule(pathEntities, resolveNextNodeJob);
 
             //***********************************************
-
-            //job to move vehicle job
-            //also fill the hashmap
-            NativeMultiHashMap<int, VehiclePosition> hashMap = new NativeMultiHashMap<int, VehiclePosition>(10000, Allocator.TempJob);   
+            //job to apply vehicle position         
             var rotationType = GetArchetypeChunkComponentType<Rotation>(false);
             var translationType = GetArchetypeChunkComponentType<Translation>(false);
             JobHandle moveVehicleJob = new MoveVehicleBodyJob
             {
-                map = hashMap.ToConcurrent(),
                 vehicleRotationType = rotationType,
                 vehicletranslateType = translationType,
-                vehicleBodyType = bodyType
-            }.Schedule(vehicleBodidesEntities, clearPathsJob);
-            //moveVehicleJob.Complete();
+                bodyLengthType = bodyLengthType,
+                bodyRawPositionType = bodyRawPositionType
+            }.Schedule(vehicleBodidesEntities, resolveNextNodeJob);
 
-            
+            //***********************************************
+            //job to fill hashmap fill the hashmap
+            NativeMultiHashMap<int, VehiclePosition> hashMap = new NativeMultiHashMap<int, VehiclePosition>(10000, Allocator.TempJob);
+            JobHandle fillHashmapJob = new FillHasMapJob
+            {
+                map = hashMap.ToConcurrent(),
+                bodyIndexPositionType = bodyIndexPositionType,
+                bodyLengthType = bodyLengthType,
+                bodyPathIDType = bodyPathIDType,
+            }.Schedule(vehicleBodidesEntities, JobHandle.CombineDependencies(clearPathsJob, resolveNextNodeJob));
+
+            //***********************************************
+            //Schedule filljob
+            JobHandle fillPathOccupancy = new FillPathsOccupancyJob
+            {
+                map = hashMap,
+                pathType = pathType
+            }.Schedule(pathEntities, fillHashmapJob);
+
+            //***********************************************
             //schedule move wheel job
             var wheelType = GetArchetypeChunkComponentType<VehicleWheelMoveAndRotate>(false);
             var wheelLocationType = GetArchetypeChunkComponentType<LocalToWorld>(false);
             JobHandle moveVehicleWheelJob = new MoveVehicleWheelJob
             {
                 cameraPosition = camTrans.position,
-                deltaTime = Time.deltaTime,
-                bodies = vehicleBodies,
+                deltaTime = 0.02f,
+                bodyIDAndSpeed = bodyIDAndSpeed,
                 wheelRotationType = rotationType,
                 vehicleWheelType = wheelType,
                 wheelLocationType = wheelLocationType,
             }.Schedule(vehicleWheelsEntities, moveVehicleJob);
-            
 
-            //Schedule filljob
-            JobHandle fillPathOccupancy = new FillPathsOccupancyJob
-            {
-                map = hashMap,
-                pathType = pathType
-            }.Schedule(pathEntities, moveVehicleJob);
+            fillPathOccupancy.Complete();
+            hashMap.Dispose();
 
             //job to check for merging
             var mergeType = GetArchetypeChunkComponentType<PathMerge>(true);
@@ -196,12 +230,7 @@ namespace CivilFX.TrafficECS
                 paths = paths
             }.Schedule(pathMergingEntities, fillPathOccupancy);
 
-
-            fillPathOccupancy.Complete();
-            hashMap.Dispose();
-
-
-            return JobHandle.CombineDependencies(resolveMergingJob, moveVehicleWheelJob);
+            return JobHandle.CombineDependencies(resolveMergingJob, moveVehicleJob, moveVehicleWheelJob);
         }
 
         protected override void OnDestroyManager()

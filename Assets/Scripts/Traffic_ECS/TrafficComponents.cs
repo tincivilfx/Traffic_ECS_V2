@@ -17,18 +17,6 @@ namespace CivilFX.TrafficECS
         public int id;
     }
 
-    public struct VehicleBodyMoveAndRotate : IComponentData
-    {
-        public static VehicleBodyMoveAndRotate Null { get; }
-        public bool waiting; //
-        public int length; //
-        public int speed; //
-        public int currentPos; //
-        public int id; //
-        public int currentPathID; //
-        public float3 location;     //used for wheels //
-        public float3 lookAtLocation; //
-    }
 
     public struct VehicleBodyIDAndSpeed : IComponentData
     {
@@ -64,10 +52,7 @@ namespace CivilFX.TrafficECS
 
     public struct VehicleWheelMoveAndRotate : IComponentData
     {
-        public Entity parent;
         public int id;
-        public float3 positionOffset;
-        public float3 rotationOffset;
     }
 
 

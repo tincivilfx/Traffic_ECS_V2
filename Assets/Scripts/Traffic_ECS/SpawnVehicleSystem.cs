@@ -54,8 +54,6 @@ namespace CivilFX.TrafficECS
             {
                 var instance = commandBuffer.Instantiate(index, body.prefab);
 
-                commandBuffer.AddComponent(index, instance, new VehicleBodyMoveAndRotate {speed = 0, length = body.length, id = body.id });
-
                 commandBuffer.AddComponent(index, instance, new VehicleBodyIDAndSpeed { speed = 0, id = body.id });
                 commandBuffer.AddComponent(index, instance, new VehicleBodyRawPosition { });
                 commandBuffer.AddComponent(index, instance, new VehicleBodyIndexPosition { });
@@ -74,12 +72,8 @@ namespace CivilFX.TrafficECS
 
             public void Execute(Entity entity, int index, [ReadOnly] ref VehicleWheel wheel)
             {
-                //Debug.Log("Spawnning Wheel");
                 var instance = commandBuffer.Instantiate(index, wheel.prefab);
-                var position = new float3(0, 0, 0) + wheel.positionOffset;
-                //Debug.Log(position);
-                commandBuffer.SetComponent(index, instance, new Translation { Value = position });
-                commandBuffer.AddComponent(index, instance, new VehicleWheelMoveAndRotate {id = wheel.id, positionOffset = wheel.positionOffset, rotationOffset = wheel.rotationOffset });
+                commandBuffer.AddComponent(index, instance, new VehicleWheelMoveAndRotate {id = wheel.id });
                 commandBuffer.DestroyEntity(index, entity);
             }
         }
@@ -87,33 +81,11 @@ namespace CivilFX.TrafficECS
         struct AssembleVehicleJob : IJobParallelFor
         {
             public EntityCommandBuffer.Concurrent commandBuffer;
-            [ReadOnly] public NativeArray<VehicleBodyMoveAndRotate> bodyComponents;
+            [ReadOnly] public NativeArray<VehicleBodyIDAndSpeed> bodyComponents;
             [ReadOnly] public NativeArray<VehicleWheelMoveAndRotate> wheelComponents;
             [ReadOnly] public NativeArray<Entity> bodyEntites;
             [ReadOnly] public NativeArray<Entity> wheelEntites;
-            /*
-            public void Execute()
-            {
-
-                for (int i=0; i<bodyEntites.Length; i++)
-                {
-                    Entity e = bodyEntites[i];
-
-                    for (int j=0; j< wheelComponents.Length; j++)
-                    {
-                        var wc = wheelComponents[j];
-
-                        if (wc.id == bodyComponents[i].id)
-                        { 
-                            wc.parent = e;
-                            commandBuffer.SetComponent(wheelEntites[j], wc);
-                            commandBuffer.AddComponent(wheelEntites[j], new Parent { Value = e });
-                            commandBuffer.AddComponent(wheelEntites[j], new LocalToParent { });
-                        }
-                    }
-                }
-            }
-            */
+           
             public void Execute(int index)
             {
                 Entity body = Entity.Null;
@@ -167,8 +139,8 @@ namespace CivilFX.TrafficECS
             } else if (status == SystemStatus.Spawned && spawnVehicleBodyJob.IsCompleted && spawnVehicleWheelJob.IsCompleted)
             {
                 //both job completed
-                var queries = GetEntityQuery(ComponentType.ReadOnly(typeof(VehicleBodyMoveAndRotate)));
-                var _bodyComponents = queries.ToComponentDataArray<VehicleBodyMoveAndRotate>(Allocator.TempJob);
+                var queries = GetEntityQuery(ComponentType.ReadOnly(typeof(VehicleBodyIDAndSpeed)));
+                var _bodyComponents = queries.ToComponentDataArray<VehicleBodyIDAndSpeed>(Allocator.TempJob);
                 var _bodyEntities = queries.ToEntityArray(Allocator.TempJob);
                 queries = GetEntityQuery(typeof(VehicleWheelMoveAndRotate));
                 var _wheelComponents = queries.ToComponentDataArray<VehicleWheelMoveAndRotate>(Allocator.TempJob);
