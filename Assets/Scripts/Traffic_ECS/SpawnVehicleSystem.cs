@@ -49,15 +49,21 @@ namespace CivilFX.TrafficECS
         struct SpawnVehicleBodyJob : IJobForEachWithEntity<VehicleBody>
         {
             public EntityCommandBuffer.Concurrent commandBuffer;
-
+            public EntityArchetype bodyType;
             public void Execute(Entity entity, int index, [ReadOnly] ref VehicleBody body)
             {
-                //Debug.Log("Spawnning Body");
                 var instance = commandBuffer.Instantiate(index, body.prefab);
-                var position = new float3(0, 0, 0);
-                //Debug.Log(position);
-                commandBuffer.SetComponent(index, instance, new Translation { Value = position });
+
                 commandBuffer.AddComponent(index, instance, new VehicleBodyMoveAndRotate {speed = 0, length = body.length, id = body.id });
+
+                commandBuffer.AddComponent(index, instance, new VehicleBodyIDAndSpeed { speed = 0, id = body.id });
+                commandBuffer.AddComponent(index, instance, new VehicleBodyRawPosition { });
+                commandBuffer.AddComponent(index, instance, new VehicleBodyIndexPosition { });
+                commandBuffer.AddComponent(index, instance, new VehicleBodyPathID { value = 255 });
+                commandBuffer.AddComponent(index, instance, new VehicleBodyLength { value = body.length });
+                commandBuffer.AddComponent(index, instance, new VehicleBodyWaitingStatus { });
+
+
                 commandBuffer.DestroyEntity(index, entity);
             }
         }
