@@ -18,6 +18,7 @@ namespace CivilFX.TrafficECS
         public static readonly byte YIELD_FOR_MERGING_OCCUPIED_BIT = 4;
 
         public static readonly int MAX_SCAN_DISTANCE = 1000;
+        public static readonly byte BYTE_INVALID = 255; 
 
         public static float Map(float value, float lowerLimit, float uperLimit, float lowerValue, float uperValue)
         {

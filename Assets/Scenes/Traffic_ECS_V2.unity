@@ -672,11 +672,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a2bf3ee62d625c4f9ec11012b59614f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  path: {fileID: 11400000, guid: 01d9bca9f8886c44f8bd54094973909d, type: 2}
+  path: {fileID: 11400000, guid: c8be1838360960c45935ab3c84d85b00, type: 2}
   type: 0
   startNode: 0
   endNode: 0
-  node: 13981
+  node: 19629
 --- !u!114 &482961566
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -697,7 +697,7 @@ MonoBehaviour:
     - path: {fileID: 11400000, guid: 9c075037ad2befa4d9b768d0882716e7, type: 2}
       stopPos: 17079
     - path: {fileID: 11400000, guid: c8be1838360960c45935ab3c84d85b00, type: 2}
-      stopPos: 6721
+      stopPos: 19629
     - path: {fileID: 11400000, guid: 600b15bfd4a30814b8a719268884b273, type: 2}
       stopPos: 6724
   - id: 1
@@ -903,7 +903,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1bfa7d0bea55ed042bcb0c65f84fe944, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  totalVehicles: 10
+  totalVehicles: 100
   vehiclesCollector: {fileID: 11400000, guid: cfbb0e914d21c9049a609eec8b95d7cb, type: 2}
   pathsCollector: {fileID: 11400000, guid: d81f457c8df74a34e8a9e76cc0c78e91, type: 2}
   signalControllers:

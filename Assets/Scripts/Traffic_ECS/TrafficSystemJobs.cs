@@ -77,9 +77,9 @@ namespace CivilFX.TrafficECS {
                     var length = chunkLength[i];
 
                     //var vehicleData = chunkVehicles[i];
-                    Path currentPath = new Path { id = 255 };
-                    Path mergedPath = new Path { id = 255 };
-                    PathLinkedData linkedData = new PathLinkedData { linkedID = 255 };
+                    Path currentPath = new Path { id = BYTE_INVALID };
+                    Path mergedPath = new Path { id = BYTE_INVALID };
+                    PathLinkedData linkedData = new PathLinkedData { linkedID = BYTE_INVALID };
                     bool hasMergedPath = false;
 
                     //get the current path of this vehicle
@@ -92,13 +92,14 @@ namespace CivilFX.TrafficECS {
                         }
                     }
 
-                    if (currentPath.id == 255)
+                    //no path found
+                    if (currentPath.id == BYTE_INVALID)
                     {
                         return;
                     }
 
                     //get mergedPath (if any)
-                    if (currentPath.linkedCount > 0 && currentPath.linked[currentPath.linkedCount - 1].chance == 255)
+                    if (currentPath.linkedCount > 0 && currentPath.linked[currentPath.linkedCount - 1].chance == BYTE_INVALID)
                     {
                         linkedData = currentPath.linked[currentPath.linkedCount - 1];
                         for (int j = 0; j < paths.Length; j++)
@@ -113,7 +114,10 @@ namespace CivilFX.TrafficECS {
                     }
 
                     //resolve next position
+
+                    //get front position
                     var frontPos = indexPosition.value + (length.value / 2);
+
                     //Debug.Log(vehicleData.id + ":" + vehicleData.currentPos + ":" + vehicleData.speed + ":" + currentPath.nodesCount);
                     if (indexPosition.value + (int)idAndSpeed.speed >= currentPath.nodesCount)
                     {
@@ -126,11 +130,17 @@ namespace CivilFX.TrafficECS {
                             indexPosition.value = linkedData.connectingNode;
                             rawPosition.position = mergedPath.pathNodes[linkedData.connectingNode];
                             rawPosition.lookAtPosition = mergedPath.pathNodes[linkedData.connectingNode + mergedPath.maxSpeed];
-                            //set
-                            chunkPathID[i] = pathID;
-                            chunkIndexPosition[i] = indexPosition;
-                            chunkRawPosition[i] = rawPosition;
-                        } 
+                        } else
+                        {
+                            pathID.value = BYTE_INVALID;
+                            indexPosition.value = -1;
+                            rawPosition.position = new float3(-1000, -1000, -1000);
+                            rawPosition.lookAtPosition = rawPosition.position;
+                        }
+                        //set
+                        chunkPathID[i] = pathID;
+                        chunkIndexPosition[i] = indexPosition;
+                        chunkRawPosition[i] = rawPosition;
                         continue;
                     }
 
@@ -203,7 +213,7 @@ namespace CivilFX.TrafficECS {
                     //accellerating
                     if (currentSpeed > idAndSpeed.speed)
                     {
-                        currentSpeed = idAndSpeed.speed + 0.1f;
+                        currentSpeed = idAndSpeed.speed + 0.2f;
                     }
 
                     //clamp speed
