@@ -154,6 +154,7 @@ namespace CivilFX.TrafficECS
             var bodyRawPositionType = GetArchetypeChunkComponentType<VehicleBodyRawPosition>();
             var bodyIndexPositionType = GetArchetypeChunkComponentType<VehicleBodyIndexPosition>();
             var bodyPathIDType = GetArchetypeChunkComponentType<VehicleBodyPathID>();
+            var bodyWaitingType = GetArchetypeChunkComponentType<VehicleBodyWaitingStatus>();
             var bodyLengthType = GetArchetypeChunkComponentType<VehicleBodyLength>(true); //readonly
             JobHandle resolveNextNodeJob = new ResolveNextPositionForVehicleJob
             {
@@ -162,6 +163,7 @@ namespace CivilFX.TrafficECS
                 bodyPathIDType = bodyPathIDType,
                 bodyRawPositionType = bodyRawPositionType,
                 bodyLengthType = bodyLengthType,
+                bodyWaitingType = bodyWaitingType,
                 paths = paths,
             }.Schedule(vehicleBodidesEntities, JobHandle.CombineDependencies(job, inputDeps));
 
@@ -230,7 +232,7 @@ namespace CivilFX.TrafficECS
                 paths = paths
             }.Schedule(pathMergingEntities, fillPathOccupancy);
 
-            return JobHandle.CombineDependencies(resolveMergingJob, moveVehicleJob, moveVehicleWheelJob);
+            return JobHandle.CombineDependencies(resolveMergingJob, moveVehicleWheelJob);
         }
 
         protected override void OnDestroyManager()

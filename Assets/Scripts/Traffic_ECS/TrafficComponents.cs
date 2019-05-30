@@ -4,7 +4,6 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace CivilFX.TrafficECS
 {
-
     public struct TrafficSettingsData : IComponentData
     {
         public int vehicleCount;
@@ -127,9 +126,9 @@ namespace CivilFX.TrafficECS
         public bool active;
     }
 
-    public struct WaitingVehicle : IComponentData
+    public struct WaitingEntity : IComponentData
     {
-        //for tagging purposing
+        public Entity entity;
     }
 
 

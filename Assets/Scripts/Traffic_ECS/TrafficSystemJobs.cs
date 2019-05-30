@@ -14,81 +14,6 @@ namespace CivilFX.TrafficECS {
 
     public unsafe partial class TrafficSystem
     {
-        public enum OccupiedType
-        {
-            Vehicle,
-            TrafficSignal,
-            YieldMerging
-        }
-
-        public static readonly byte VEHICLE_OCCUPIED_BIT = 1;
-        public static readonly byte TRAFFIC_SIGNAL_OCCUPIED_BIT = 2;
-        public static readonly byte YIELD_FOR_MERGING_OCCUPIED_BIT = 4;
-
-        public static readonly int MAX_SCAN_DISTANCE = 1000;
-
-        public static float Map(float value, float lowerLimit, float uperLimit, float lowerValue, float uperValue)
-        {
-            return lowerValue + ((uperValue - lowerValue) / (uperLimit - lowerLimit)) * (value - lowerLimit);
-        }
-
-        public static byte SetOccupied(byte value, bool occupied, OccupiedType type)
-        {
-            switch (type)
-            {
-                case OccupiedType.Vehicle:
-                    if (occupied)
-                    {
-                        //set bit
-                        value = (byte)(value | VEHICLE_OCCUPIED_BIT);
-                    } else
-                    {
-                        //clear bit
-                        value = (byte)(value & (~VEHICLE_OCCUPIED_BIT));
-                    }
-                    break;
-                case OccupiedType.TrafficSignal:
-                    if (occupied)
-                    {
-                        value = (byte)(value | TRAFFIC_SIGNAL_OCCUPIED_BIT);
-                    } else
-                    {
-                        value = (byte)(value & (~TRAFFIC_SIGNAL_OCCUPIED_BIT));
-                    }
-                    break;
-                case OccupiedType.YieldMerging:
-                    if (occupied)
-                    {
-                        value = (byte)(value | YIELD_FOR_MERGING_OCCUPIED_BIT);
-                    }
-                    else
-                    {
-                        value = (byte)(value & (~YIELD_FOR_MERGING_OCCUPIED_BIT));
-                    }
-                    break;
-            }
-            return value;
-        }
-
-        //return    true if occupied
-        //          false otherwise
-        public static bool CheckOccupied(byte value, OccupiedType type)
-        {
-            switch (type)
-            {
-                case OccupiedType.Vehicle:
-                    return (value & VEHICLE_OCCUPIED_BIT) != 0;
-                case OccupiedType.TrafficSignal:
-                    return (value & TRAFFIC_SIGNAL_OCCUPIED_BIT) != 0;
-                case OccupiedType.YieldMerging:
-                    return (value & YIELD_FOR_MERGING_OCCUPIED_BIT) != 0;
-            }
-            return true;
-        }
-
-
-
-
         //job to place all the vehicles on all the paths when starting up
         [BurstCompile]
         public struct OnetimePopulateVehicleToPathJob : IJobChunk
@@ -132,6 +57,7 @@ namespace CivilFX.TrafficECS {
             public ArchetypeChunkComponentType<VehicleBodyRawPosition> bodyRawPositionType;
             public ArchetypeChunkComponentType<VehicleBodyIndexPosition> bodyIndexPositionType;
             public ArchetypeChunkComponentType<VehicleBodyPathID> bodyPathIDType;
+            public ArchetypeChunkComponentType<VehicleBodyWaitingStatus> bodyWaitingType;
             [ReadOnly] public ArchetypeChunkComponentType<VehicleBodyLength> bodyLengthType;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
@@ -205,13 +131,13 @@ namespace CivilFX.TrafficECS {
                             chunkIndexPosition[i] = indexPosition;
                             chunkRawPosition[i] = rawPosition;
                         } 
+                        continue;
+                    }
 
-                        /*
-                        //hiding this vehicle
-                        vehicle.waiting = true;
-                        commandBuffer.AddComponent(index, entity, new Frozen { });
-                        */
-
+                    if (frontPos >= currentPath.nodesCount - length.value)
+                    {
+                        var chunkWaiting = chunk.GetNativeArray(bodyWaitingType);
+                        chunkWaiting[i] = new VehicleBodyWaitingStatus { value = true };
                         continue;
                     }
 
@@ -501,6 +427,22 @@ namespace CivilFX.TrafficECS {
 
                     var rot = math.mul(math.normalize(rotationChunk[i].Value), quaternion.AxisAngle(new float3(1, 0, 0), speed * deltaTime));
                     rotationChunk[i] = new Rotation { Value = rot };
+                }
+
+            }
+        }
+
+        public struct HideOutofPathVehicleJob : IJobChunk
+        {
+            public EntityCommandBuffer.Concurrent commandBuffer;
+            [ReadOnly] public ArchetypeChunkComponentType<VehicleBodyWaitingStatus> bodyWaitingType;
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+            {
+                var chunkWaiting = chunk.GetNativeArray(bodyWaitingType);
+
+                for (int i=0; i<chunk.Count; i++)
+                {
+
                 }
 
             }
