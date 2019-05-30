@@ -17,7 +17,8 @@ namespace CivilFX.TrafficECS
     {
 
         private NativeArray<Path> paths;
-        
+        private NativeArray<Unity.Mathematics.Random> rands;
+
         private bool isDoneSetup;
         BeginInitializationEntityCommandBufferSystem m_EntityCommandBufferSystem;
 
@@ -40,8 +41,9 @@ namespace CivilFX.TrafficECS
 
         private JobHandle OneTimeSetup(JobHandle inputDeps)
         {
+            //get camera transform
             camTrans = Camera.main.transform;
-            //Debug.Log(cam.gameObject.name);
+
             //cache references to paths data
             pathEntities = GetEntityQuery(ComponentType.ReadOnly(typeof(Path)));
             paths = pathEntities.ToComponentDataArray<Path>(Allocator.Persistent);
@@ -60,6 +62,9 @@ namespace CivilFX.TrafficECS
             });
             vehicleWheelsEntities = GetEntityQuery(typeof(VehicleWheelMoveAndRotate));
 
+            //rand
+            rands = new NativeArray<Unity.Mathematics.Random>(1, Allocator.Persistent);
+            rands[0] = new Unity.Mathematics.Random(2352352);
 
             //calculate location for all vehices to all paths
             ulong totalNodes = 0;
@@ -147,15 +152,32 @@ namespace CivilFX.TrafficECS
                 return OneTimeSetup(inputDeps);
             }
 
+
             NativeArray<VehicleBodyIDAndSpeed> bodyIDAndSpeed = GetEntityQuery(ComponentType.ReadOnly(typeof(VehicleBodyIDAndSpeed))).ToComponentDataArray<VehicleBodyIDAndSpeed>(Allocator.TempJob, out JobHandle job);
 
-            //job to get the next position in the path
+
             var bodyIDSpeedType = GetArchetypeChunkComponentType<VehicleBodyIDAndSpeed>();
             var bodyRawPositionType = GetArchetypeChunkComponentType<VehicleBodyRawPosition>();
             var bodyIndexPositionType = GetArchetypeChunkComponentType<VehicleBodyIndexPosition>();
             var bodyPathIDType = GetArchetypeChunkComponentType<VehicleBodyPathID>();
             var bodyWaitingType = GetArchetypeChunkComponentType<VehicleBodyWaitingStatus>();
             var bodyLengthType = GetArchetypeChunkComponentType<VehicleBodyLength>(true); //readonly
+
+            //***********************************************
+            //job to respawn vehicles
+            JobHandle respawnVehiclesJob = new RespawnVehicleJob
+            {
+                rands = rands,
+                bodyIDSpeedType = bodyIDSpeedType,
+                bodyIndexPositionType = bodyIndexPositionType,
+                bodyPathIDType = bodyPathIDType,
+                bodyRawPositionType = bodyRawPositionType,
+                paths = paths,
+            }.Schedule(vehicleBodidesEntities, JobHandle.CombineDependencies(job, inputDeps));
+
+
+            //***********************************************
+            //job to get the next position in the path
             JobHandle resolveNextNodeJob = new ResolveNextPositionForVehicleJob
             {
                 bodyIDSpeedType = bodyIDSpeedType,
@@ -165,7 +187,7 @@ namespace CivilFX.TrafficECS
                 bodyLengthType = bodyLengthType,
                 bodyWaitingType = bodyWaitingType,
                 paths = paths,
-            }.Schedule(vehicleBodidesEntities, JobHandle.CombineDependencies(job, inputDeps));
+            }.Schedule(vehicleBodidesEntities, respawnVehiclesJob);
 
             //***********************************************
             //job to clear paths occupancy
@@ -238,6 +260,7 @@ namespace CivilFX.TrafficECS
         protected override void OnDestroyManager()
         {
             paths.Dispose();
+            rands.Dispose();
         }
 
     }

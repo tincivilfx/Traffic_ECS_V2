@@ -26,6 +26,8 @@ namespace CivilFX.TrafficECS
 
         [Header("--------------------")]
         public TrafficSignalController[] signalControllers;
+
+
         //
         public static int VEHICLE_ID_POOL = 0;
         public static int PATH_ID_POOL = 0;
@@ -275,7 +277,6 @@ namespace CivilFX.TrafficECS
 
             Resources.UnloadAsset(pathsCollector);
             pathsCollector = null;
-
 
             //explicitly call garbage collector
             System.GC.Collect();

@@ -57,7 +57,7 @@ namespace CivilFX.TrafficECS
                 commandBuffer.AddComponent(index, instance, new VehicleBodyIDAndSpeed { speed = 0, id = body.id });
                 commandBuffer.AddComponent(index, instance, new VehicleBodyRawPosition { });
                 commandBuffer.AddComponent(index, instance, new VehicleBodyIndexPosition { });
-                commandBuffer.AddComponent(index, instance, new VehicleBodyPathID { value = 255 });
+                commandBuffer.AddComponent(index, instance, new VehicleBodyPathID { value = TrafficSystem.BYTE_INVALID });
                 commandBuffer.AddComponent(index, instance, new VehicleBodyLength { value = body.length });
                 commandBuffer.AddComponent(index, instance, new VehicleBodyWaitingStatus { });
 

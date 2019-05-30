@@ -2,7 +2,7 @@
 
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
+//using UnityEngine;
 using Unity.Entities;
 using Unity.Burst;
 using Unity.Jobs;
@@ -48,7 +48,70 @@ namespace CivilFX.TrafficECS {
             }
         }
 
-        //[BurstCompile]
+
+        [BurstCompile]
+        struct RespawnVehicleJob : IJobChunk
+        {
+            [ReadOnly] public NativeArray<Path> paths;
+            public NativeArray<Random> rands;
+            public ArchetypeChunkComponentType<VehicleBodyIDAndSpeed> bodyIDSpeedType;
+            public ArchetypeChunkComponentType<VehicleBodyRawPosition> bodyRawPositionType;
+            public ArchetypeChunkComponentType<VehicleBodyIndexPosition> bodyIndexPositionType;
+            public ArchetypeChunkComponentType<VehicleBodyPathID> bodyPathIDType;
+
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+            {
+                var chunkBodyIDAndSpeed = chunk.GetNativeArray(bodyIDSpeedType);
+                var chunkPathID = chunk.GetNativeArray(bodyPathIDType);
+                var chunkRawPosition = chunk.GetNativeArray(bodyRawPositionType);
+                var chunkIndexPosition = chunk.GetNativeArray(bodyIndexPositionType);
+
+                for (int i = 0; i < chunk.Count; i++)
+                {
+                    var idAndSpeed = chunkBodyIDAndSpeed[i];
+                    var rawPosition = chunkRawPosition[i];
+                    var indexPosition = chunkIndexPosition[i];
+                    var pathID = chunkPathID[i];
+
+                    if (pathID.value == BYTE_INVALID)
+                    {
+                        Random rand = rands[0];
+                        int pathIndex = rand.NextInt(0, paths.Length);
+                        byte lvalue = 0;
+                        Path currentPath = paths[pathIndex];
+                        rands[0] = rand;
+                        if (currentPath.type != TrafficPathType.Main)
+                        {
+                            //continue;
+                        }
+
+                        for (int j=0; j<MAX_SCAN_DISTANCE; j++)
+                        {
+                            lvalue |= currentPath.occupied[j];
+                        }
+
+                        //TODO: skip entire chunk
+                        if (CheckOccupied(lvalue, OccupiedType.Vehicle))
+                        {
+                            continue;
+                        }
+
+                        pathID.value = currentPath.id;
+                        idAndSpeed.speed = currentPath.maxSpeed;
+                        indexPosition.value = 0;
+                        rawPosition.position = currentPath.pathNodes[0];
+                        rawPosition.lookAtPosition = currentPath.pathNodes[currentPath.maxSpeed];
+
+                        chunkPathID[i] = pathID;
+                        chunkBodyIDAndSpeed[i] = idAndSpeed;
+                        chunkIndexPosition[i] = indexPosition;
+                        chunkRawPosition[i] = rawPosition;
+                    }
+                }
+            }
+        }
+
+        [BurstCompile]
         public struct ResolveNextPositionForVehicleJob : IJobChunk
         {
             [ReadOnly] public NativeArray<Path> paths;
@@ -76,7 +139,6 @@ namespace CivilFX.TrafficECS {
                     var pathID = chunkPathID[i];
                     var length = chunkLength[i];
 
-                    //var vehicleData = chunkVehicles[i];
                     Path currentPath = new Path { id = BYTE_INVALID };
                     Path mergedPath = new Path { id = BYTE_INVALID };
                     PathLinkedData linkedData = new PathLinkedData { linkedID = BYTE_INVALID };
@@ -95,7 +157,7 @@ namespace CivilFX.TrafficECS {
                     //no path found
                     if (currentPath.id == BYTE_INVALID)
                     {
-                        return;
+                        continue;
                     }
 
                     //get mergedPath (if any)
@@ -114,12 +176,11 @@ namespace CivilFX.TrafficECS {
                     }
 
                     //resolve next position
-
                     //get front position
                     var frontPos = indexPosition.value + (length.value / 2);
 
                     //Debug.Log(vehicleData.id + ":" + vehicleData.currentPos + ":" + vehicleData.speed + ":" + currentPath.nodesCount);
-                    if (indexPosition.value + (int)idAndSpeed.speed >= currentPath.nodesCount)
+                    if (indexPosition.value + currentPath.maxSpeed >= currentPath.nodesCount)
                     {
                         //Debug.Log("Reach end");
                         //this vehicle is at the end of this path
@@ -134,24 +195,17 @@ namespace CivilFX.TrafficECS {
                         {
                             pathID.value = BYTE_INVALID;
                             indexPosition.value = -1;
-                            rawPosition.position = new float3(-1000, -1000, -1000);
-                            rawPosition.lookAtPosition = rawPosition.position;
+                            idAndSpeed.speed = 0;
+                            rawPosition.position = OUT_OF_WORLD_POSITION;
+                            rawPosition.lookAtPosition = OUT_OF_WORLD_POSITION;
                         }
                         //set
                         chunkPathID[i] = pathID;
+                        chunkBodyIDAndSpeed[i] = idAndSpeed;
                         chunkIndexPosition[i] = indexPosition;
                         chunkRawPosition[i] = rawPosition;
                         continue;
                     }
-
-                    /*
-                    if (frontPos >= currentPath.nodesCount - length.value)
-                    {
-                        var chunkWaiting = chunk.GetNativeArray(bodyWaitingType);
-                        chunkWaiting[i] = new VehicleBodyWaitingStatus { value = true };
-                        continue;
-                    }
-                    */
 
                     //check how many nodes can this vehicle move to
                     //i.e. : scan distance
@@ -182,10 +236,10 @@ namespace CivilFX.TrafficECS {
                             break;
                         }
                     }
+
                     //Debug.Log(vehicleData.id + ":" + hit + ":" + hitDis + ":" + scanDisLeftOver);
                     //if no vehicle seen on current path
                     //we check for the merged path
-
                     if (!hit && scanDisLeftOver > 0)
                     {
                         var startNode = linkedData.connectingNode;
@@ -202,8 +256,12 @@ namespace CivilFX.TrafficECS {
                             scanDisLeftOver--;
                         }
                     }
-
-
+                    
+                    //rescale hitDis to ensure vehicle move to out of path
+                    if (frontPos + length.value >= currentPath.nodesCount && !hasMergedPath)
+                    {
+                        hitDis = MAX_SCAN_DISTANCE;
+                    }
                     //map the speed
                     var currentSpeed = Map(hitDis, 0, MAX_SCAN_DISTANCE, 0, currentPath.maxSpeed);
 
@@ -233,6 +291,7 @@ namespace CivilFX.TrafficECS {
             }
         }
 
+        //TODO: clean up unused
         //Job to move vehicle
         [BurstCompile]
         public struct MoveVehicleBodyJob : IJobChunk
@@ -287,7 +346,7 @@ namespace CivilFX.TrafficECS {
             }
         }
 
-
+        [BurstCompile]
         public struct ResolveMergingForPath : IJobChunk
         {
             [ReadOnly] public NativeArray<Path> paths;
@@ -437,7 +496,7 @@ namespace CivilFX.TrafficECS {
                         }
                     }
 
-                    var rot = math.mul(math.normalize(rotationChunk[i].Value), quaternion.AxisAngle(new float3(1, 0, 0), speed * deltaTime));
+                    var rot = math.mul(math.normalize(rotationChunk[i].Value), quaternion.AxisAngle(new float3(1, 0, 0), (int)speed * deltaTime));
                     rotationChunk[i] = new Rotation { Value = rot };
                 }
 

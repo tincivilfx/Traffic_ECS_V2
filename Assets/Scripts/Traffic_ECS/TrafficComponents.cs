@@ -7,6 +7,7 @@ namespace CivilFX.TrafficECS
     public struct TrafficSettingsData : IComponentData
     {
         public int vehicleCount;
+        public float3 outOfWorldPosition;
     }
 
     public struct VehicleBody : IComponentData
