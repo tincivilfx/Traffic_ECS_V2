@@ -19,7 +19,7 @@ namespace CivilFX.TrafficECS
 
     public struct VehicleBodyIDAndSpeed : IComponentData
     {
-        public byte speed;
+        public float speed;
         public int id;
     }
 

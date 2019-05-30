@@ -115,7 +115,7 @@ namespace CivilFX.TrafficECS {
                     //resolve next position
                     var frontPos = indexPosition.value + (length.value / 2);
                     //Debug.Log(vehicleData.id + ":" + vehicleData.currentPos + ":" + vehicleData.speed + ":" + currentPath.nodesCount);
-                    if (indexPosition.value + idAndSpeed.speed >= currentPath.nodesCount)
+                    if (indexPosition.value + (int)idAndSpeed.speed >= currentPath.nodesCount)
                     {
                         //Debug.Log("Reach end");
                         //this vehicle is at the end of this path
@@ -134,12 +134,14 @@ namespace CivilFX.TrafficECS {
                         continue;
                     }
 
+                    /*
                     if (frontPos >= currentPath.nodesCount - length.value)
                     {
                         var chunkWaiting = chunk.GetNativeArray(bodyWaitingType);
                         chunkWaiting[i] = new VehicleBodyWaitingStatus { value = true };
                         continue;
                     }
+                    */
 
                     //check how many nodes can this vehicle move to
                     //i.e. : scan distance
@@ -193,7 +195,7 @@ namespace CivilFX.TrafficECS {
 
 
                     //map the speed
-                    var currentSpeed = (int)(Map(hitDis, 0, MAX_SCAN_DISTANCE, 0, currentPath.maxSpeed));
+                    var currentSpeed = Map(hitDis, 0, MAX_SCAN_DISTANCE, 0, currentPath.maxSpeed);
 
                     //Debug.Log(vehicleData.id + ":" + hit + ":" + hitDis + ":" + scanDisLeftOver);
                     //Debug.Log(vehicleData.id + ":" + currentSpeed);
@@ -201,15 +203,15 @@ namespace CivilFX.TrafficECS {
                     //accellerating
                     if (currentSpeed > idAndSpeed.speed)
                     {
-                        currentSpeed = idAndSpeed.speed + 1;
+                        currentSpeed = idAndSpeed.speed + 0.1f;
                     }
 
                     //clamp speed
                     currentSpeed = math.clamp(currentSpeed, 0, currentPath.maxSpeed);
 
                     //set current speed
-                    idAndSpeed.speed = (byte)currentSpeed;
-                    indexPosition.value = indexPosition.value + currentSpeed;
+                    idAndSpeed.speed = currentSpeed;
+                    indexPosition.value = indexPosition.value + (int)currentSpeed;
                     rawPosition.position = currentPath.pathNodes[indexPosition.value];
                     rawPosition.lookAtPosition = indexPosition.value < currentPath.nodesCount - currentPath.maxSpeed ? currentPath.pathNodes[indexPosition.value + currentPath.maxSpeed] : rawPosition.position;
 
@@ -414,7 +416,7 @@ namespace CivilFX.TrafficECS {
                     }
 
                     //find speed
-                    var speed = 0;
+                    var speed = 0.0f;
                     for (int j=0; j<bodyIDAndSpeed.Length; j++)
                     {
                         if (wheelChunk[i].id == bodyIDAndSpeed[j].id)
