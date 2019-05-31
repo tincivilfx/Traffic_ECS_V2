@@ -121,6 +121,9 @@ namespace CivilFX.TrafficECS
             currentProp = so.FindProperty("type");
             EditorGUILayout.PropertyField(currentProp, new GUIContent("Type"), true);
             
+            //respawn
+            currentProp = so.FindProperty("allowRespawn");
+            EditorGUILayout.PropertyField(currentProp);
             EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
 
@@ -160,8 +163,6 @@ namespace CivilFX.TrafficECS
                     }
                     GUILayout.EndHorizontal();
                 }
-
-
                 EditorGUI.indentLevel--;
             }
 

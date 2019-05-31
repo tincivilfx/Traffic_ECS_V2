@@ -301,7 +301,7 @@ namespace CivilFX.TrafficECS
                     TrafficPath path = pathInfos[i].path;
                     Debug.Log(pathInfos[i].bakedNodes.Count);
                     BakedTrafficPath bakedPath = ScriptableObject.CreateInstance<BakedTrafficPath>();
-                    bakedPath.Init(pathInfos[i].bakedNodes, path.gameObject.name, path.type, path.pathSpeedMPH, path.bakedResolution, path.splitChance, path.notes);
+                    bakedPath.Init(pathInfos[i].bakedNodes, path.gameObject.name, path.type, path.pathSpeedMPH, path.bakedResolution, path.splitChance, path.allowRespawn, path.notes);
                     bakedPath.CreateAndSave(serializedObject.FindProperty("savedLocation").stringValue);
                     pathInfos[i].bakedNodes = null;
                     return;

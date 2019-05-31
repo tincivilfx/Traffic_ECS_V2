@@ -56,6 +56,7 @@ namespace CivilFX.TrafficECS
     }
 
 
+    //TODO: remove offsets
     public struct VehicleWheel : IComponentData
     {
         public Entity prefab;
@@ -70,6 +71,7 @@ namespace CivilFX.TrafficECS
         public byte id;
         public byte maxSpeed;
         public byte linkedCount;
+        public bool allowedRespawn;
         public TrafficPathType type;
         public int nodesCount;
 

@@ -31,6 +31,7 @@ namespace CivilFX.TrafficECS
         [Range(0, 100)]
         public int splitChance;
         public TrafficPathType type;
+        public bool allowRespawn;
 
         public string notes;
 

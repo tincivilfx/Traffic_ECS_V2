@@ -80,9 +80,9 @@ namespace CivilFX.TrafficECS {
                         byte lvalue = 0;
                         Path currentPath = paths[pathIndex];
                         rands[0] = rand;
-                        if (currentPath.type != TrafficPathType.Main)
+                        if (!currentPath.allowedRespawn)
                         {
-                            //continue;
+                            continue;
                         }
 
                         for (int j=0; j<MAX_SCAN_DISTANCE; j++)
@@ -93,7 +93,7 @@ namespace CivilFX.TrafficECS {
                         //TODO: skip entire chunk
                         if (CheckOccupied(lvalue, OccupiedType.Vehicle))
                         {
-                            continue;
+                            return;
                         }
 
                         pathID.value = currentPath.id;

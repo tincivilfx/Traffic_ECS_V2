@@ -81,11 +81,8 @@ namespace CivilFX.TrafficECS
         [Range(1, 100)]
         public int speedLitmit;
 
-        [Header("Default Vehicles' Rotaion:")]
-        public Vector3 defaultRotation;
-
-        [Header("Camera Path Settings:")]
-        public bool cameraPath;
+        [Header("Respawn Settings:")]
+        public bool allowRespawn;
 
         [Header("Smart Vehicles On This Path:")]
         public bool enableSmartVehicles;
@@ -110,7 +107,7 @@ namespace CivilFX.TrafficECS
 
         #endregion
 
-        public void Init(List<Vector3> _pathNodes, string _pathName, TrafficPathType _pathType, int pathSpeed, int _resolution, int _splitToChance ,string _notes)
+        public void Init(List<Vector3> _pathNodes, string _pathName, TrafficPathType _pathType, int pathSpeed, int _resolution, int _splitToChance, bool allowRespawn, string _notes)
         {
             pathNodes = _pathNodes;
             pathName = _pathName;
@@ -119,6 +116,7 @@ namespace CivilFX.TrafficECS
             bakedResolution = _resolution;
             actualSpeedLimit = speedLitmit / _resolution;
             splitToChance = _splitToChance;
+            this.allowRespawn = allowRespawn;
             notes = _notes;
         }
 
@@ -139,6 +137,7 @@ namespace CivilFX.TrafficECS
                 path.splitToChance = splitToChance;
                 path.notes = notes;
                 path.vehiclesCount = vehiclesCount;
+                path.allowRespawn = allowRespawn;
                 EditorUtility.SetDirty(path);
             }
             else

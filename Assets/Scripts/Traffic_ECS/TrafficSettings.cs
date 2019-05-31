@@ -181,6 +181,7 @@ namespace CivilFX.TrafficECS
                     nodesCount = currentPath.PathNodes.Count,
                     pathNodes = nodesPtr,
                     occupied = occupiedPtr,
+                    allowedRespawn = currentPath.allowRespawn,
                     linkedCount = linkedCount,
                     linked = linkedData.GetPointer()
                 };

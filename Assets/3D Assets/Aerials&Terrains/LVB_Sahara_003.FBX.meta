@@ -1,0 +1,817 @@
+fileFormatVersion: 2
+guid: a830426e21c53e040860e7a351277f7b
+ModelImporter:
+  serializedVersion: 23
+  fileIDToRecycleName:
+    100000: 3d Curbs and Gutter
+    100002: 8" Template
+    100004: AERIAL-Layout2.jpg
+    100006: Arc
+    100008: Arrow ONLY001
+    100010: Arrow ONLY002
+    100012: Arrow ONLY003
+    100014: Arrow ONLY004
+    100016: Arrow ONLY005
+    100018: Arrow ONLY006
+    100020: Arrow ONLY007
+    100022: Arrow ONLY008
+    100024: Arrow ONLY009
+    100026: Arrow ONLY010
+    100028: Arrow ONLY011
+    100030: Arrow ONLY012
+    100032: Arrow ONLY013
+    100034: Arrow ONLY014
+    100036: Arrow ONLY015
+    100038: Arrow ONLY016
+    100040: Arrow ONLY017
+    100042: Arrow ONLY018
+    100044: Arrow ONLY019
+    100046: Arrow ONLY020
+    100048: Arrow024
+    100050: Arrow026
+    100052: Arrow027
+    100054: Arrow028
+    100056: Arrow029
+    100058: Arrow030
+    100060: Arrow031
+    100062: Arrow032
+    100064: Arrow033
+    100066: Arrow034
+    100068: Arrow035
+    100070: Arrow036
+    100072: Arrow037
+    100074: Arrow038
+    100076: Arrow039
+    100078: Arrow040
+    100080: Arrow041
+    100082: Arrow042
+    100084: Arrow043
+    100086: Arrow044
+    100088: Arrow045
+    100090: Arrow046
+    100092: Arrow047
+    100094: Arrow048
+    100096: Arrow049
+    100098: Arrow050
+    100100: Arrow051
+    100102: Arrow052
+    100104: Arrow053
+    100106: Arrow054
+    100108: Arrow055
+    100110: Arrow056
+    100112: Arrow057
+    100114: Arrow058
+    100116: Arrow059
+    100118: Arrow060
+    100120: Arrow061
+    100122: Arrow062
+    100124: Arrow063
+    100126: Arrow064
+    100128: Arrow065
+    100130: Arrow066
+    100132: Arrow067
+    100134: Arrow068
+    100136: Arrow069
+    100138: ARROWS
+    100140: Line
+    100142: Line 1
+    100144: Line 2
+    100146: Line 3
+    100148: Line002
+    100150: Line003
+    100152: //RootNode
+    100154: mEDIANS
+    100156: New Sidewalk
+    100158: New sidewalks
+    100160: newmedian
+    100162: Outside BOX
+    100164: ROadSurface
+    100166: Rturn stripe
+    100168: Spline
+    100170: Spline 1
+    100172: Spline 10
+    100174: Spline 11
+    100176: Spline 12
+    100178: Spline 13
+    100180: Spline 14
+    100182: Spline 15
+    100184: Spline 16
+    100186: Spline 17
+    100188: Spline 18
+    100190: Spline 19
+    100192: Spline 2
+    100194: Spline 20
+    100196: Spline 21
+    100198: Spline 22
+    100200: Spline 23
+    100202: Spline 24
+    100204: Spline 25
+    100206: Spline 26
+    100208: Spline 27
+    100210: Spline 28
+    100212: Spline 29
+    100214: Spline 3
+    100216: Spline 4
+    100218: Spline 5
+    100220: Spline 6
+    100222: Spline 7
+    100224: Spline 8
+    100226: Spline 9
+    100228: Stop Bars
+    100230: Stripes
+    100232: Tree Boxes
+    100234: Xwalk 1
+    100236: Xwalk 2
+    100238: Xwalks_Old
+    400000: 3d Curbs and Gutter
+    400002: 8" Template
+    400004: AERIAL-Layout2.jpg
+    400006: Arc
+    400008: Arrow ONLY001
+    400010: Arrow ONLY002
+    400012: Arrow ONLY003
+    400014: Arrow ONLY004
+    400016: Arrow ONLY005
+    400018: Arrow ONLY006
+    400020: Arrow ONLY007
+    400022: Arrow ONLY008
+    400024: Arrow ONLY009
+    400026: Arrow ONLY010
+    400028: Arrow ONLY011
+    400030: Arrow ONLY012
+    400032: Arrow ONLY013
+    400034: Arrow ONLY014
+    400036: Arrow ONLY015
+    400038: Arrow ONLY016
+    400040: Arrow ONLY017
+    400042: Arrow ONLY018
+    400044: Arrow ONLY019
+    400046: Arrow ONLY020
+    400048: Arrow024
+    400050: Arrow026
+    400052: Arrow027
+    400054: Arrow028
+    400056: Arrow029
+    400058: Arrow030
+    400060: Arrow031
+    400062: Arrow032
+    400064: Arrow033
+    400066: Arrow034
+    400068: Arrow035
+    400070: Arrow036
+    400072: Arrow037
+    400074: Arrow038
+    400076: Arrow039
+    400078: Arrow040
+    400080: Arrow041
+    400082: Arrow042
+    400084: Arrow043
+    400086: Arrow044
+    400088: Arrow045
+    400090: Arrow046
+    400092: Arrow047
+    400094: Arrow048
+    400096: Arrow049
+    400098: Arrow050
+    400100: Arrow051
+    400102: Arrow052
+    400104: Arrow053
+    400106: Arrow054
+    400108: Arrow055
+    400110: Arrow056
+    400112: Arrow057
+    400114: Arrow058
+    400116: Arrow059
+    400118: Arrow060
+    400120: Arrow061
+    400122: Arrow062
+    400124: Arrow063
+    400126: Arrow064
+    400128: Arrow065
+    400130: Arrow066
+    400132: Arrow067
+    400134: Arrow068
+    400136: Arrow069
+    400138: ARROWS
+    400140: Line
+    400142: Line 1
+    400144: Line 2
+    400146: Line 3
+    400148: Line002
+    400150: Line003
+    400152: //RootNode
+    400154: mEDIANS
+    400156: New Sidewalk
+    400158: New sidewalks
+    400160: newmedian
+    400162: Outside BOX
+    400164: ROadSurface
+    400166: Rturn stripe
+    400168: Spline
+    400170: Spline 1
+    400172: Spline 10
+    400174: Spline 11
+    400176: Spline 12
+    400178: Spline 13
+    400180: Spline 14
+    400182: Spline 15
+    400184: Spline 16
+    400186: Spline 17
+    400188: Spline 18
+    400190: Spline 19
+    400192: Spline 2
+    400194: Spline 20
+    400196: Spline 21
+    400198: Spline 22
+    400200: Spline 23
+    400202: Spline 24
+    400204: Spline 25
+    400206: Spline 26
+    400208: Spline 27
+    400210: Spline 28
+    400212: Spline 29
+    400214: Spline 3
+    400216: Spline 4
+    400218: Spline 5
+    400220: Spline 6
+    400222: Spline 7
+    400224: Spline 8
+    400226: Spline 9
+    400228: Stop Bars
+    400230: Stripes
+    400232: Tree Boxes
+    400234: Xwalk 1
+    400236: Xwalk 2
+    400238: Xwalks_Old
+    2100000: AERIAL-Layout2
+    2100002: light c
+    2100004: Asphalt
+    2100006: 'Material #36 Slot #3'
+    2100008: Concrete Grey 02
+    2100010: Solid Stripes
+    2100012: 'Material #61'
+    2100014: No Name
+    2100016: 'Material #75'
+    2100018: 'Material #63'
+    2100020: White
+    2100022: 'Material #77'
+    2100024: 'Material #90'
+    2100026: 'Material #102'
+    2100028: barrier concrete
+    2100030: 'Material #103'
+    2300000: 3d Curbs and Gutter
+    2300002: AERIAL-Layout2.jpg
+    2300004: Arc
+    2300006: Arrow ONLY001
+    2300008: Arrow ONLY002
+    2300010: Arrow ONLY003
+    2300012: Arrow ONLY004
+    2300014: Arrow ONLY005
+    2300016: Arrow ONLY006
+    2300018: Arrow ONLY007
+    2300020: Arrow ONLY008
+    2300022: Arrow ONLY009
+    2300024: Arrow ONLY010
+    2300026: Arrow ONLY011
+    2300028: Arrow ONLY012
+    2300030: Arrow ONLY013
+    2300032: Arrow ONLY014
+    2300034: Arrow ONLY015
+    2300036: Arrow ONLY016
+    2300038: Arrow ONLY017
+    2300040: Arrow ONLY018
+    2300042: Arrow ONLY019
+    2300044: Arrow ONLY020
+    2300046: Arrow024
+    2300048: Arrow026
+    2300050: Arrow027
+    2300052: Arrow028
+    2300054: Arrow029
+    2300056: Arrow030
+    2300058: Arrow031
+    2300060: Arrow032
+    2300062: Arrow033
+    2300064: Arrow034
+    2300066: Arrow035
+    2300068: Arrow036
+    2300070: Arrow037
+    2300072: Arrow038
+    2300074: Arrow039
+    2300076: Arrow040
+    2300078: Arrow041
+    2300080: Arrow042
+    2300082: Arrow043
+    2300084: Arrow044
+    2300086: Arrow045
+    2300088: Arrow046
+    2300090: Arrow047
+    2300092: Arrow048
+    2300094: Arrow049
+    2300096: Arrow050
+    2300098: Arrow051
+    2300100: Arrow052
+    2300102: Arrow053
+    2300104: Arrow054
+    2300106: Arrow055
+    2300108: Arrow056
+    2300110: Arrow057
+    2300112: Arrow058
+    2300114: Arrow059
+    2300116: Arrow060
+    2300118: Arrow061
+    2300120: Arrow062
+    2300122: Arrow063
+    2300124: Arrow064
+    2300126: Arrow065
+    2300128: Arrow066
+    2300130: Arrow067
+    2300132: Arrow068
+    2300134: Arrow069
+    2300136: Line
+    2300138: Line 1
+    2300140: Line 2
+    2300142: Line 3
+    2300144: Line002
+    2300146: Line003
+    2300148: New Sidewalk
+    2300150: New sidewalks
+    2300152: newmedian
+    2300154: Outside BOX
+    2300156: ROadSurface
+    2300158: Rturn stripe
+    2300160: Spline
+    2300162: Spline 1
+    2300164: Spline 10
+    2300166: Spline 11
+    2300168: Spline 12
+    2300170: Spline 13
+    2300172: Spline 14
+    2300174: Spline 15
+    2300176: Spline 16
+    2300178: Spline 17
+    2300180: Spline 18
+    2300182: Spline 19
+    2300184: Spline 2
+    2300186: Spline 20
+    2300188: Spline 21
+    2300190: Spline 22
+    2300192: Spline 23
+    2300194: Spline 24
+    2300196: Spline 25
+    2300198: Spline 26
+    2300200: Spline 27
+    2300202: Spline 28
+    2300204: Spline 29
+    2300206: Spline 3
+    2300208: Spline 4
+    2300210: Spline 5
+    2300212: Spline 6
+    2300214: Spline 7
+    2300216: Spline 8
+    2300218: Spline 9
+    2300220: Stop Bars
+    2300222: Tree Boxes
+    2300224: Xwalk 1
+    2300226: Xwalk 2
+    2300228: Xwalks_Old
+    3300000: 3d Curbs and Gutter
+    3300002: AERIAL-Layout2.jpg
+    3300004: Arc
+    3300006: Arrow ONLY001
+    3300008: Arrow ONLY002
+    3300010: Arrow ONLY003
+    3300012: Arrow ONLY004
+    3300014: Arrow ONLY005
+    3300016: Arrow ONLY006
+    3300018: Arrow ONLY007
+    3300020: Arrow ONLY008
+    3300022: Arrow ONLY009
+    3300024: Arrow ONLY010
+    3300026: Arrow ONLY011
+    3300028: Arrow ONLY012
+    3300030: Arrow ONLY013
+    3300032: Arrow ONLY014
+    3300034: Arrow ONLY015
+    3300036: Arrow ONLY016
+    3300038: Arrow ONLY017
+    3300040: Arrow ONLY018
+    3300042: Arrow ONLY019
+    3300044: Arrow ONLY020
+    3300046: Arrow024
+    3300048: Arrow026
+    3300050: Arrow027
+    3300052: Arrow028
+    3300054: Arrow029
+    3300056: Arrow030
+    3300058: Arrow031
+    3300060: Arrow032
+    3300062: Arrow033
+    3300064: Arrow034
+    3300066: Arrow035
+    3300068: Arrow036
+    3300070: Arrow037
+    3300072: Arrow038
+    3300074: Arrow039
+    3300076: Arrow040
+    3300078: Arrow041
+    3300080: Arrow042
+    3300082: Arrow043
+    3300084: Arrow044
+    3300086: Arrow045
+    3300088: Arrow046
+    3300090: Arrow047
+    3300092: Arrow048
+    3300094: Arrow049
+    3300096: Arrow050
+    3300098: Arrow051
+    3300100: Arrow052
+    3300102: Arrow053
+    3300104: Arrow054
+    3300106: Arrow055
+    3300108: Arrow056
+    3300110: Arrow057
+    3300112: Arrow058
+    3300114: Arrow059
+    3300116: Arrow060
+    3300118: Arrow061
+    3300120: Arrow062
+    3300122: Arrow063
+    3300124: Arrow064
+    3300126: Arrow065
+    3300128: Arrow066
+    3300130: Arrow067
+    3300132: Arrow068
+    3300134: Arrow069
+    3300136: Line
+    3300138: Line 1
+    3300140: Line 2
+    3300142: Line 3
+    3300144: Line002
+    3300146: Line003
+    3300148: New Sidewalk
+    3300150: New sidewalks
+    3300152: newmedian
+    3300154: Outside BOX
+    3300156: ROadSurface
+    3300158: Rturn stripe
+    3300160: Spline
+    3300162: Spline 1
+    3300164: Spline 10
+    3300166: Spline 11
+    3300168: Spline 12
+    3300170: Spline 13
+    3300172: Spline 14
+    3300174: Spline 15
+    3300176: Spline 16
+    3300178: Spline 17
+    3300180: Spline 18
+    3300182: Spline 19
+    3300184: Spline 2
+    3300186: Spline 20
+    3300188: Spline 21
+    3300190: Spline 22
+    3300192: Spline 23
+    3300194: Spline 24
+    3300196: Spline 25
+    3300198: Spline 26
+    3300200: Spline 27
+    3300202: Spline 28
+    3300204: Spline 29
+    3300206: Spline 3
+    3300208: Spline 4
+    3300210: Spline 5
+    3300212: Spline 6
+    3300214: Spline 7
+    3300216: Spline 8
+    3300218: Spline 9
+    3300220: Stop Bars
+    3300222: Tree Boxes
+    3300224: Xwalk 1
+    3300226: Xwalk 2
+    3300228: Xwalks_Old
+    4300000: AERIAL-Layout2.jpg
+    4300002: 3d Curbs and Gutter
+    4300004: ROadSurface
+    4300006: Spline
+    4300008: Spline
+    4300010: Spline
+    4300012: Spline
+    4300014: Spline
+    4300016: Spline
+    4300018: Stop Bars
+    4300020: Spline
+    4300022: Spline
+    4300024: Spline
+    4300026: Line
+    4300028: Line
+    4300030: Spline
+    4300032: Spline
+    4300034: Spline
+    4300036: Line
+    4300038: Spline
+    4300040: Spline
+    4300042: Spline
+    4300044: Spline
+    4300046: Spline
+    4300048: Spline
+    4300050: Spline
+    4300052: Spline
+    4300054: Spline
+    4300056: Spline
+    4300058: Spline
+    4300060: Spline
+    4300062: Spline
+    4300064: Spline
+    4300066: Spline
+    4300068: Spline
+    4300070: Spline
+    4300072: Line
+    4300074: Rturn stripe
+    4300076: Line002
+    4300078: Line003
+    4300080: Spline
+    4300082: Arc
+    4300084: Xwalks_Old
+    4300086: Xwalk 2
+    4300088: Xwalk 1
+    4300090: Arrow ONLY001
+    4300092: Arrow ONLY002
+    4300094: Arrow ONLY003
+    4300096: Arrow ONLY004
+    4300098: Arrow ONLY005
+    4300100: Arrow ONLY006
+    4300102: Arrow ONLY007
+    4300104: Arrow ONLY008
+    4300106: Arrow ONLY009
+    4300108: Arrow ONLY010
+    4300110: Arrow ONLY011
+    4300112: Arrow ONLY012
+    4300114: Arrow ONLY013
+    4300116: Arrow ONLY014
+    4300118: Arrow ONLY015
+    4300120: Arrow ONLY016
+    4300122: Arrow ONLY017
+    4300124: Arrow ONLY018
+    4300126: Arrow ONLY019
+    4300128: Arrow ONLY020
+    4300130: Arrow024
+    4300132: Arrow026
+    4300134: Arrow027
+    4300136: Arrow028
+    4300138: Arrow029
+    4300140: Arrow030
+    4300142: Arrow031
+    4300144: Arrow032
+    4300146: Arrow033
+    4300148: Arrow034
+    4300150: Arrow035
+    4300152: Arrow036
+    4300154: Arrow037
+    4300156: Arrow038
+    4300158: Arrow039
+    4300160: Arrow040
+    4300162: Arrow041
+    4300164: Arrow042
+    4300166: Arrow043
+    4300168: Arrow044
+    4300170: Arrow045
+    4300172: Arrow046
+    4300174: Arrow047
+    4300176: Arrow048
+    4300178: Arrow049
+    4300180: Arrow050
+    4300182: Arrow051
+    4300184: Arrow052
+    4300186: Arrow053
+    4300188: Arrow054
+    4300190: Arrow055
+    4300192: Arrow056
+    4300194: Arrow057
+    4300196: Arrow058
+    4300198: Arrow059
+    4300200: Arrow060
+    4300202: Arrow061
+    4300204: Arrow062
+    4300206: Arrow063
+    4300208: Arrow064
+    4300210: Arrow065
+    4300212: Arrow066
+    4300214: Arrow067
+    4300216: Arrow068
+    4300218: Arrow069
+    4300220: Outside BOX
+    4300222: newmedian
+    4300224: New sidewalks
+    4300226: New Sidewalk
+    4300228: Tree Boxes
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: AERIAL-Layout2
+    second: {fileID: 2100000, guid: 14cbeda7f4e2c134893bd0e4a3724a28, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Asphalt
+    second: {fileID: 2100000, guid: e445afc1028101c4aa3216b350413480, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Concrete Grey 02
+    second: {fileID: 2100000, guid: 1b64e11c3e2e8cd479b57124740629db, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #102'
+    second: {fileID: 2100000, guid: 25d792cff17ac2d4cb0d8f88a1d78344, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #103'
+    second: {fileID: 2100000, guid: 73b8ad1e96b91f24fb0596d03e90052f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #36 Slot #3'
+    second: {fileID: 2100000, guid: 1c68c68cfa660ff4f84c5bbaa792ccb4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #61'
+    second: {fileID: 2100000, guid: b54e5210ae210564f9f1aa0a40c0220e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #63'
+    second: {fileID: 2100000, guid: 72623d3400dc016439a79e7a91b41269, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #75'
+    second: {fileID: 2100000, guid: fc88c30692ca63c4d8ac63d2da5bcb51, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #77'
+    second: {fileID: 2100000, guid: b23c84fa93c2a3e43b50cf5abadf438d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #90'
+    second: {fileID: 2100000, guid: ac8d6cd1051d4d640a78c9ab8befe52b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: No Name
+    second: {fileID: 2100000, guid: b970fe4bf45025442ab2229bc612ecd4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Solid Stripes
+    second: {fileID: 2100000, guid: 74e6fe3ef08318f4681e4a812de48337, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: White
+    second: {fileID: 2100000, guid: 8291ac9d16cb2144097fee6d3ef35553, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: barrier concrete
+    second: {fileID: 2100000, guid: 36cf4ca89fe1f2e49950c9520dfc9472, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: light c
+    second: {fileID: 2100000, guid: f0c79ad93f42b1746a0c767d5953d818, type: 2}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AERIAL-Layout1-8K
+    second: {fileID: 2800000, guid: 50ed2441b28c815499cb1f99055609d1, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Btn_waIN
+    second: {fileID: 2800000, guid: 8b85bf730c9b51a4e906f47257fea5a3, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Concrete_05
+    second: {fileID: 2800000, guid: af971d49d0a752c4aa8d7d8c57450ded, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: XwalkPaver_Dif
+    second: {fileID: 2800000, guid: cff151d43cbca0a439a07d6d482cebe0, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: XwalkPaver_Norm
+    second: {fileID: 2800000, guid: b27c174b2d7b2a0468008019f639adce, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: _Asphalt Dark
+    second: {fileID: 2800000, guid: cd2c10b34194dda4186e5e3d5e97402b, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: barrier_concrete_small
+    second: {fileID: 2800000, guid: b632b83190d6e604aa573d59e7650269, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: barrier_concrete_small_bump
+    second: {fileID: 2800000, guid: 4600c6506adb2134ab87449e27052430, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: cement_white
+    second: {fileID: 2800000, guid: ea05cef954df69f459678b168a5697bd, type: 3}
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    previousCalculatedGlobalScale: 1
+    hasPreviousCalculatedGlobalScale: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
