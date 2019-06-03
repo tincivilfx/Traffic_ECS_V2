@@ -188,6 +188,7 @@ namespace CivilFX.TrafficECS
                 bodyRawPositionType = bodyRawPositionType,
                 bodyLengthType = bodyLengthType,
                 bodyWaitingType = bodyWaitingType,
+                bodySplittingType = bodySplittingType,
                 paths = paths,
             }.Schedule(vehicleBodidesEntities, respawnVehiclesJob);
 

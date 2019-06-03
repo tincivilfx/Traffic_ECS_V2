@@ -253,6 +253,25 @@ namespace CivilFX.TrafficECS {
                         continue;
                     }
 
+                    //split to next path
+                    if (hasSplittingPath && indexPosition.value >= splitting.transitionNode)
+                    {
+                        pathID.value = splitting.linkedPathID;
+                        indexPosition.value = 0;
+                        rawPosition.position = splittingPath.pathNodes[0];
+                        rawPosition.lookAtPosition = splittingPath.pathNodes[splittingPath.maxSpeed];
+                        splitting.linkedPathID = BYTE_INVALID;
+                        //set
+                        chunkPathID[i] = pathID;
+                        chunkBodyIDAndSpeed[i] = idAndSpeed;
+                        chunkIndexPosition[i] = indexPosition;
+                        chunkRawPosition[i] = rawPosition;
+                        chunkSplitting[i] = splitting;
+                        continue;
+                    }
+
+
+
                     //check how many nodes can this vehicle move to
                     //i.e. : scan distance
                     var scanDis = MAX_SCAN_DISTANCE;
