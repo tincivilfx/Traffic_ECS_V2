@@ -161,6 +161,7 @@ namespace CivilFX.TrafficECS
             var bodyIndexPositionType = GetArchetypeChunkComponentType<VehicleBodyIndexPosition>();
             var bodyPathIDType = GetArchetypeChunkComponentType<VehicleBodyPathID>();
             var bodyWaitingType = GetArchetypeChunkComponentType<VehicleBodyWaitingStatus>();
+            var bodySplittingType = GetArchetypeChunkComponentType<VehicleBodySplittingPath>();
             var bodyLengthType = GetArchetypeChunkComponentType<VehicleBodyLength>(true); //readonly
 
             //***********************************************
@@ -172,6 +173,7 @@ namespace CivilFX.TrafficECS
                 bodyIndexPositionType = bodyIndexPositionType,
                 bodyPathIDType = bodyPathIDType,
                 bodyRawPositionType = bodyRawPositionType,
+                bodySplittingType = bodySplittingType,
                 paths = paths,
             }.Schedule(vehicleBodidesEntities, JobHandle.CombineDependencies(job, inputDeps));
 

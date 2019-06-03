@@ -50,6 +50,12 @@ namespace CivilFX.TrafficECS
         public bool value;
     }
 
+    public struct VehicleBodySplittingPath : IComponentData
+    {
+        public byte linkedPathID;
+        public int transitionNode;
+    }
+
     public struct VehicleWheelMoveAndRotate : IComponentData
     {
         public int id;

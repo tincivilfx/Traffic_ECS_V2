@@ -58,6 +58,7 @@ namespace CivilFX.TrafficECS {
             public ArchetypeChunkComponentType<VehicleBodyRawPosition> bodyRawPositionType;
             public ArchetypeChunkComponentType<VehicleBodyIndexPosition> bodyIndexPositionType;
             public ArchetypeChunkComponentType<VehicleBodyPathID> bodyPathIDType;
+            public ArchetypeChunkComponentType<VehicleBodySplittingPath> bodySplittingType;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
@@ -65,6 +66,7 @@ namespace CivilFX.TrafficECS {
                 var chunkPathID = chunk.GetNativeArray(bodyPathIDType);
                 var chunkRawPosition = chunk.GetNativeArray(bodyRawPositionType);
                 var chunkIndexPosition = chunk.GetNativeArray(bodyIndexPositionType);
+                var chunkSplitting = chunk.GetNativeArray(bodySplittingType);
 
                 for (int i = 0; i < chunk.Count; i++)
                 {
@@ -72,9 +74,13 @@ namespace CivilFX.TrafficECS {
                     var rawPosition = chunkRawPosition[i];
                     var indexPosition = chunkIndexPosition[i];
                     var pathID = chunkPathID[i];
+                    var splitting = chunkSplitting[i];
 
+                    //this vehicle current has no path
+                    //i.e. it is outofworld
                     if (pathID.value == BYTE_INVALID)
                     {
+                        //randomly choose a path to place the vehicle on
                         Random rand = rands[0];
                         int pathIndex = rand.NextInt(0, paths.Length);
                         byte lvalue = 0;
@@ -90,12 +96,33 @@ namespace CivilFX.TrafficECS {
                             lvalue |= currentPath.occupied[j];
                         }
 
-                        //TODO: skip entire chunk
+                        //skip entire chunk
                         if (CheckOccupied(lvalue, OccupiedType.Vehicle))
                         {
                             return;
                         }
 
+                        //assign splitting path
+                        splitting.linkedPathID = BYTE_INVALID;
+                        if (currentPath.linkedCount > 0 )
+                        {
+                            for (int j=0; j<currentPath.linkedCount; j++)
+                            {
+                                if (currentPath.linked[j].chance != BYTE_INVALID)
+                                {
+                                    var roll = rand.NextInt(0, 100);
+                                    if (roll <= currentPath.linked[j].chance)
+                                    {
+                                        splitting.linkedPathID = currentPath.linked[j].linkedID;
+                                        splitting.transitionNode = currentPath.linked[j].transitionNode;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        
+                        //
                         pathID.value = currentPath.id;
                         idAndSpeed.speed = currentPath.maxSpeed;
                         indexPosition.value = 0;
@@ -106,6 +133,7 @@ namespace CivilFX.TrafficECS {
                         chunkBodyIDAndSpeed[i] = idAndSpeed;
                         chunkIndexPosition[i] = indexPosition;
                         chunkRawPosition[i] = rawPosition;
+                        chunkSplitting[i] = splitting;
                     }
                 }
             }
@@ -121,6 +149,7 @@ namespace CivilFX.TrafficECS {
             public ArchetypeChunkComponentType<VehicleBodyIndexPosition> bodyIndexPositionType;
             public ArchetypeChunkComponentType<VehicleBodyPathID> bodyPathIDType;
             public ArchetypeChunkComponentType<VehicleBodyWaitingStatus> bodyWaitingType;
+            public ArchetypeChunkComponentType<VehicleBodySplittingPath> bodySplittingType;
             [ReadOnly] public ArchetypeChunkComponentType<VehicleBodyLength> bodyLengthType;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
@@ -130,7 +159,7 @@ namespace CivilFX.TrafficECS {
                 var chunkRawPosition = chunk.GetNativeArray(bodyRawPositionType);
                 var chunkIndexPosition = chunk.GetNativeArray(bodyIndexPositionType);
                 var chunkLength = chunk.GetNativeArray(bodyLengthType);
-
+                var chunkSplitting = chunk.GetNativeArray(bodySplittingType);
                 for (int i = 0; i < chunk.Count; i++)
                 {
                     var idAndSpeed = chunkBodyIDAndSpeed[i];
@@ -138,11 +167,13 @@ namespace CivilFX.TrafficECS {
                     var indexPosition = chunkIndexPosition[i];
                     var pathID = chunkPathID[i];
                     var length = chunkLength[i];
+                    var splitting = chunkSplitting[i];
 
                     Path currentPath = new Path { id = BYTE_INVALID };
                     Path mergedPath = new Path { id = BYTE_INVALID };
                     PathLinkedData linkedData = new PathLinkedData { linkedID = BYTE_INVALID };
                     bool hasMergedPath = false;
+                    bool hasSplittingPath = false;
 
                     //get the current path of this vehicle
                     for (int j = 0; j < paths.Length; j++)
