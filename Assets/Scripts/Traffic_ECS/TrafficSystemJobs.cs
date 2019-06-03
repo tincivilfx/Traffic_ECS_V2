@@ -171,6 +171,7 @@ namespace CivilFX.TrafficECS {
 
                     Path currentPath = new Path { id = BYTE_INVALID };
                     Path mergedPath = new Path { id = BYTE_INVALID };
+                    Path splittingPath = new Path { id = BYTE_INVALID };
                     PathLinkedData linkedData = new PathLinkedData { linkedID = BYTE_INVALID };
                     bool hasMergedPath = false;
                     bool hasSplittingPath = false;
@@ -201,6 +202,20 @@ namespace CivilFX.TrafficECS {
                             {
                                 mergedPath = paths[j];
                                 hasMergedPath = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    //get splitting path (if any)
+                    if (splitting.linkedPathID != BYTE_INVALID)
+                    {
+                        hasSplittingPath = true;
+                        for (int j = 0; j < paths.Length; j++)
+                        {
+                            if (splitting.linkedPathID == paths[j].id)
+                            {
+                                splittingPath = paths[j];
                                 break;
                             }
                         }
