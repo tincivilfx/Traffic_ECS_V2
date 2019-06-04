@@ -57,6 +57,7 @@ namespace CivilFX.TrafficECS
                     typeof(VehicleBodyIndexPosition),
                     typeof(VehicleBodyPathID),
                     typeof(VehicleBodyLength),
+                    typeof(VehicleBodyMaxSpeed),
                     typeof(VehicleBodyWaitingStatus)
                 }
             });
@@ -88,8 +89,6 @@ namespace CivilFX.TrafficECS
 
             //get the vehicles
             var vehiclesBodies = vehicleBodidesEntities.ToComponentDataArray<VehicleBodyIDAndSpeed>(Allocator.TempJob);
-            var vehiclesIndexPosition = vehicleBodidesEntities.ToComponentDataArray<VehicleBodyIndexPosition>(Allocator.TempJob);
-            var vehiclesPathID = vehicleBodidesEntities.ToComponentDataArray<VehicleBodyPathID>(Allocator.TempJob);
 
             //calculate the actual number of vehicles on a single path base on the percentage
             for (int i = 0; i < paths.Length; i++)
@@ -107,21 +106,16 @@ namespace CivilFX.TrafficECS
                     {
                         break;
                     }
-                    vehiclesIndexPosition[currentVehicleCount] = new VehicleBodyIndexPosition { value = j * (paths[i].nodesCount / vehiclesCounts[i]) };
-                    vehiclesPathID[currentVehicleCount] = new VehicleBodyPathID { value = paths[i].id };
-
-                    hashMap.TryAdd(vehiclesBodies[currentVehicleCount].id, new VehicleInitData { pathID = paths[i].id, pos = vehiclesIndexPosition[currentVehicleCount].value });
+                    hashMap.TryAdd(vehiclesBodies[currentVehicleCount].id, new VehicleInitData { pathID = paths[i].id, speed = paths[i].maxSpeed, pos = j * (paths[i].nodesCount / vehiclesCounts[i]) });
                     currentVehicleCount++;
                 }
             }
             vehiclesBodies.Dispose();
-            vehiclesIndexPosition.Dispose();
-            vehiclesPathID.Dispose();
-
+       
             var bodyIDType = GetArchetypeChunkComponentType<VehicleBodyIDAndSpeed>(true); //readonly
             var bodyPathIDType = GetArchetypeChunkComponentType<VehicleBodyPathID>();
             var bodyIndexType = GetArchetypeChunkComponentType<VehicleBodyIndexPosition>();
-
+            var bodyMaxSpeedType = GetArchetypeChunkComponentType<VehicleBodyMaxSpeed>();
 
             //schedule job to populate vehicles to paths
             JobHandle job = new OnetimePopulateVehicleToPathJob
@@ -129,12 +123,14 @@ namespace CivilFX.TrafficECS
                 map = hashMap,
                 vehicleBodyIDType = bodyIDType,
                 vehicleBodyIndexPositionType = bodyIndexType,
-                vehicleBodyPathIDType = bodyPathIDType
+                vehicleBodyPathIDType = bodyPathIDType,
+                bodyMaxSpeedType = bodyMaxSpeedType,
             }.Schedule(vehicleBodidesEntities, inputDeps);
 
             job.Complete();
             hashMap.Dispose();
-            return job;
+            
+            return inputDeps;
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -162,6 +158,7 @@ namespace CivilFX.TrafficECS
             var bodyPathIDType = GetArchetypeChunkComponentType<VehicleBodyPathID>();
             var bodyWaitingType = GetArchetypeChunkComponentType<VehicleBodyWaitingStatus>();
             var bodySplittingType = GetArchetypeChunkComponentType<VehicleBodySplittingPath>();
+            var bodyMaxSpeedType = GetArchetypeChunkComponentType<VehicleBodyMaxSpeed>();
             var bodyLengthType = GetArchetypeChunkComponentType<VehicleBodyLength>(true); //readonly
 
             //***********************************************
@@ -174,6 +171,7 @@ namespace CivilFX.TrafficECS
                 bodyPathIDType = bodyPathIDType,
                 bodyRawPositionType = bodyRawPositionType,
                 bodySplittingType = bodySplittingType,
+                bodyMaxSpeedType = bodyMaxSpeedType,
                 paths = paths,
             }.Schedule(vehicleBodidesEntities, JobHandle.CombineDependencies(job, inputDeps));
 
@@ -182,6 +180,7 @@ namespace CivilFX.TrafficECS
             //job to get the next position in the path
             JobHandle resolveNextNodeJob = new ResolveNextPositionForVehicleJob
             {
+                seed = (uint)Time.frameCount,
                 bodyIDSpeedType = bodyIDSpeedType,
                 bodyIndexPositionType =bodyIndexPositionType,
                 bodyPathIDType = bodyPathIDType,
@@ -189,6 +188,7 @@ namespace CivilFX.TrafficECS
                 bodyLengthType = bodyLengthType,
                 bodyWaitingType = bodyWaitingType,
                 bodySplittingType = bodySplittingType,
+                bodyMaxSpeedType = bodyMaxSpeedType,
                 paths = paths,
             }.Schedule(vehicleBodidesEntities, respawnVehiclesJob);
 

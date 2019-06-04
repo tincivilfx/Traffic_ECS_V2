@@ -22,26 +22,28 @@ namespace CivilFX.TrafficECS {
             [ReadOnly] public ArchetypeChunkComponentType<VehicleBodyIDAndSpeed> vehicleBodyIDType;
             public ArchetypeChunkComponentType<VehicleBodyPathID> vehicleBodyPathIDType;
             public ArchetypeChunkComponentType<VehicleBodyIndexPosition> vehicleBodyIndexPositionType;
+            public ArchetypeChunkComponentType<VehicleBodyMaxSpeed> bodyMaxSpeedType;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 var chunkID = chunk.GetNativeArray(vehicleBodyIDType);
                 var chunkPathID = chunk.GetNativeArray(vehicleBodyPathIDType);
                 var chunkIndexPosition = chunk.GetNativeArray(vehicleBodyIndexPositionType);
-
+                var chunkMaxSpeed = chunk.GetNativeArray(bodyMaxSpeedType);
                 for (int i=0; i< chunk.Count; i++)
                 {
                     var id = chunkID[i];
                     var pathId = chunkPathID[i];
                     var index = chunkIndexPosition[i];
-
+                    var maxSpeed = chunkMaxSpeed[i];
                     if (map.TryGetValue(id.id, out VehicleInitData data))
                     {
                         pathId.value = data.pathID;
-                        index.value = data.pos;
-
+                        index.value = data.pos;                     
+                        maxSpeed.value = data.speed;
                         chunkPathID[i] = pathId;
                         chunkIndexPosition[i] = index;
+                        chunkMaxSpeed[i] = maxSpeed;
                     }
                 }
 
@@ -59,7 +61,7 @@ namespace CivilFX.TrafficECS {
             public ArchetypeChunkComponentType<VehicleBodyIndexPosition> bodyIndexPositionType;
             public ArchetypeChunkComponentType<VehicleBodyPathID> bodyPathIDType;
             public ArchetypeChunkComponentType<VehicleBodySplittingPath> bodySplittingType;
-
+            public ArchetypeChunkComponentType<VehicleBodyMaxSpeed> bodyMaxSpeedType;
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 var chunkBodyIDAndSpeed = chunk.GetNativeArray(bodyIDSpeedType);
@@ -67,6 +69,7 @@ namespace CivilFX.TrafficECS {
                 var chunkRawPosition = chunk.GetNativeArray(bodyRawPositionType);
                 var chunkIndexPosition = chunk.GetNativeArray(bodyIndexPositionType);
                 var chunkSplitting = chunk.GetNativeArray(bodySplittingType);
+                var chunkMaxSpeed = chunk.GetNativeArray(bodyMaxSpeedType);
 
                 for (int i = 0; i < chunk.Count; i++)
                 {
@@ -75,6 +78,7 @@ namespace CivilFX.TrafficECS {
                     var indexPosition = chunkIndexPosition[i];
                     var pathID = chunkPathID[i];
                     var splitting = chunkSplitting[i];
+                    var maxSpeed = chunkMaxSpeed[i];
 
                     //this vehicle current has no path
                     //i.e. it is outofworld
@@ -99,7 +103,7 @@ namespace CivilFX.TrafficECS {
                         //skip entire chunk
                         if (CheckOccupied(lvalue, OccupiedType.Vehicle))
                         {
-                            return;
+                            continue;
                         }
 
                         //assign splitting path
@@ -121,6 +125,8 @@ namespace CivilFX.TrafficECS {
                             }
                         }
 
+                        var higherSpeed = rand.NextInt(0, SPEED_VARIANCE);
+                        maxSpeed.value = (byte)(currentPath.maxSpeed + higherSpeed);
                         
                         //
                         pathID.value = currentPath.id;
@@ -133,6 +139,7 @@ namespace CivilFX.TrafficECS {
                         chunkBodyIDAndSpeed[i] = idAndSpeed;
                         chunkIndexPosition[i] = indexPosition;
                         chunkRawPosition[i] = rawPosition;
+                        chunkMaxSpeed[i] = maxSpeed;
                         chunkSplitting[i] = splitting;
                     }
                 }
@@ -142,15 +149,18 @@ namespace CivilFX.TrafficECS {
         [BurstCompile]
         public struct ResolveNextPositionForVehicleJob : IJobChunk
         {
+            //public NativeArray<Random> rands;
+            public uint seed;
             [ReadOnly] public NativeArray<Path> paths;
-
             public ArchetypeChunkComponentType<VehicleBodyIDAndSpeed> bodyIDSpeedType;
             public ArchetypeChunkComponentType<VehicleBodyRawPosition> bodyRawPositionType;
             public ArchetypeChunkComponentType<VehicleBodyIndexPosition> bodyIndexPositionType;
             public ArchetypeChunkComponentType<VehicleBodyPathID> bodyPathIDType;
             public ArchetypeChunkComponentType<VehicleBodyWaitingStatus> bodyWaitingType;
             public ArchetypeChunkComponentType<VehicleBodySplittingPath> bodySplittingType;
+            public ArchetypeChunkComponentType<VehicleBodyMaxSpeed> bodyMaxSpeedType;
             [ReadOnly] public ArchetypeChunkComponentType<VehicleBodyLength> bodyLengthType;
+
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
@@ -160,14 +170,19 @@ namespace CivilFX.TrafficECS {
                 var chunkIndexPosition = chunk.GetNativeArray(bodyIndexPositionType);
                 var chunkLength = chunk.GetNativeArray(bodyLengthType);
                 var chunkSplitting = chunk.GetNativeArray(bodySplittingType);
+                var chunkMaxSpeed = chunk.GetNativeArray(bodyMaxSpeedType);
+
+                Random rand = new Random(seed);
                 for (int i = 0; i < chunk.Count; i++)
                 {
+                    
                     var idAndSpeed = chunkBodyIDAndSpeed[i];
                     var rawPosition = chunkRawPosition[i];
                     var indexPosition = chunkIndexPosition[i];
                     var pathID = chunkPathID[i];
                     var length = chunkLength[i];
                     var splitting = chunkSplitting[i];
+                    var maxSpeed = chunkMaxSpeed[i];
 
                     Path currentPath = new Path { id = BYTE_INVALID };
                     Path mergedPath = new Path { id = BYTE_INVALID };
@@ -186,7 +201,7 @@ namespace CivilFX.TrafficECS {
                         }
                     }
 
-                    //no path found
+                    //no path found for this vehicle
                     if (currentPath.id == BYTE_INVALID)
                     {
                         continue;
@@ -237,6 +252,7 @@ namespace CivilFX.TrafficECS {
                             indexPosition.value = linkedData.connectingNode;
                             rawPosition.position = mergedPath.pathNodes[linkedData.connectingNode];
                             rawPosition.lookAtPosition = mergedPath.pathNodes[linkedData.connectingNode + mergedPath.maxSpeed];
+                            maxSpeed.value = (byte)(mergedPath.maxSpeed + rand.NextInt(0, SPEED_VARIANCE));
                         } else
                         {
                             pathID.value = BYTE_INVALID;
@@ -250,6 +266,7 @@ namespace CivilFX.TrafficECS {
                         chunkBodyIDAndSpeed[i] = idAndSpeed;
                         chunkIndexPosition[i] = indexPosition;
                         chunkRawPosition[i] = rawPosition;
+                        chunkMaxSpeed[i] = maxSpeed;
                         continue;
                     }
 
@@ -261,12 +278,14 @@ namespace CivilFX.TrafficECS {
                         rawPosition.position = splittingPath.pathNodes[0];
                         rawPosition.lookAtPosition = splittingPath.pathNodes[splittingPath.maxSpeed];
                         splitting.linkedPathID = BYTE_INVALID;
+                        maxSpeed.value = (byte)(splittingPath.maxSpeed + rand.NextInt(0, SPEED_VARIANCE));
                         //set
                         chunkPathID[i] = pathID;
                         chunkBodyIDAndSpeed[i] = idAndSpeed;
                         chunkIndexPosition[i] = indexPosition;
                         chunkRawPosition[i] = rawPosition;
                         chunkSplitting[i] = splitting;
+                        chunkMaxSpeed[i] = maxSpeed;
                         continue;
                     }
 
@@ -328,7 +347,7 @@ namespace CivilFX.TrafficECS {
                         hitDis = MAX_SCAN_DISTANCE;
                     }
                     //map the speed
-                    var currentSpeed = Map(hitDis, 0, MAX_SCAN_DISTANCE, 0, currentPath.maxSpeed);
+                    var currentSpeed = Map(hitDis, 0, MAX_SCAN_DISTANCE, 0, maxSpeed.value);
 
                     //Debug.Log(vehicleData.id + ":" + hit + ":" + hitDis + ":" + scanDisLeftOver);
                     //Debug.Log(vehicleData.id + ":" + currentSpeed);
@@ -340,7 +359,7 @@ namespace CivilFX.TrafficECS {
                     }
 
                     //clamp speed
-                    currentSpeed = math.clamp(currentSpeed, 0, currentPath.maxSpeed);
+                    currentSpeed = math.clamp(currentSpeed, 0, maxSpeed.value);
 
                     //set current speed
                     idAndSpeed.speed = currentSpeed;

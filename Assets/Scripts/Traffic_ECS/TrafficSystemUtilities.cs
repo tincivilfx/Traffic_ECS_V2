@@ -18,6 +18,8 @@ namespace CivilFX.TrafficECS
         public static readonly int MAX_SCAN_DISTANCE = 1000;
         public static readonly byte BYTE_INVALID = 255;
 
+        public static readonly byte SPEED_VARIANCE = 5;
+
         public static readonly float3 OUT_OF_WORLD_POSITION = new float3(-1000, -1000, -1000);
 
         public static float Map(float value, float lowerLimit, float uperLimit, float lowerValue, float uperValue)

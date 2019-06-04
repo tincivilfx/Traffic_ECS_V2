@@ -194,6 +194,72 @@ MonoBehaviour:
   lineColor: {r: 1, g: 0.015686274, b: 0.10885512, a: 1}
   addMultiple: 0
   addMultipleCount: 3
+--- !u!1 &100155032
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 100155033}
+  - component: {fileID: 100155034}
+  m_Layer: 0
+  m_Name: Sahara-WB-3-RT-1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &100155033
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100155032}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 819784389}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &100155034
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100155032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae3fc772ebd9d354384000975ba4c5a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  nodes:
+  - {x: 60.889656, y: -0.15238953, z: -61.658348}
+  - {x: 59.596474, y: -0.15239315, z: -58.80316}
+  - {x: 59.526196, y: -0.15239757, z: -49.644745}
+  - {x: 56.133068, y: -0.15240227, z: -40.8178}
+  - {x: 52.602333, y: -0.15240227, z: -28.206146}
+  - {x: 56.537582, y: -0.15240227, z: -19.196178}
+  - {x: 62.286514, y: -0.15240227, z: -16.459236}
+  - {x: 66.04227, y: -0.15240227, z: -18.511564}
+  pathSpeedMPH: 25
+  pathName: 
+  smartTraffic: 1
+  pathType: 0
+  bakedResolution: 1
+  splitChance: 20
+  type: 3
+  allowRespawn: 0
+  notes: "Connecting:\n\tSahara-NB-1"
+  displayInEditor: 1
+  forceStraightLinePath: 0
+  lineColor: {r: 0.015686274, g: 1, b: 0.1604328, a: 1}
+  addMultiple: 0
+  addMultipleCount: 3
 --- !u!1 &136516143
 GameObject:
   m_ObjectHideFlags: 0
@@ -238,7 +304,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1bfa7d0bea55ed042bcb0c65f84fe944, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  totalVehicles: 200
+  totalVehicles: 300
   vehiclesCollector: {fileID: 11400000, guid: cfbb0e914d21c9049a609eec8b95d7cb, type: 2}
   pathsCollector: {fileID: 11400000, guid: 08c0d9edb7cd7eb48b8dfcfd4c6525cc, type: 2}
   signalControllers:
@@ -1014,10 +1080,10 @@ RectTransform:
   m_Father: {fileID: 1801492192}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 453.3711, y: 192}
-  m_SizeDelta: {x: -906, y: 30}
+  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -80.12891, y: -108}
+  m_SizeDelta: {x: 161, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &719250757
 MonoBehaviour:
@@ -1052,7 +1118,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: EFEAFAEF
+  m_Text: 999+
 --- !u!222 &719250758
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1101,7 +1167,8 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -254.16, y: 30.71525, z: -6.98}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
+  m_Children:
+  - {fileID: 728309272}
   m_Father: {fileID: 758677565}
   m_RootOrder: 12
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1140,10 +1207,75 @@ MonoBehaviour:
   splitChance: 0
   type: 0
   allowRespawn: 1
-  notes: 
+  notes: "Splitting:\n\tSahara-SB-3-RT-1"
   displayInEditor: 1
   forceStraightLinePath: 0
   lineColor: {r: 1, g: 0.015686274, b: 0.10885512, a: 1}
+  addMultiple: 0
+  addMultipleCount: 5
+--- !u!1 &728309271
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 728309272}
+  - component: {fileID: 728309273}
+  m_Layer: 0
+  m_Name: Sahara-SB-3-RT-1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &728309272
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 728309271}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 725098244}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &728309273
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 728309271}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae3fc772ebd9d354384000975ba4c5a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  nodes:
+  - {x: 82.70511, y: -0.15240099, z: 1.2673986}
+  - {x: 79.904945, y: -0.1524007, z: 5.78468}
+  - {x: 58.51574, y: -0.15240069, z: 9.048597}
+  - {x: 38.77137, y: -0.15240084, z: 9.10531}
+  - {x: 29.263357, y: -0.15240084, z: 9.686013}
+  - {x: 23.71835, y: -0.15240084, z: 14.632814}
+  - {x: 24.76543, y: -0.15240084, z: 15.480189}
+  pathSpeedMPH: 30
+  pathName: 
+  smartTraffic: 1
+  pathType: 0
+  bakedResolution: 1
+  splitChance: 20
+  type: 3
+  allowRespawn: 0
+  notes: "Connecting:\n\tSahara-WB-3"
+  displayInEditor: 1
+  forceStraightLinePath: 0
+  lineColor: {r: 0.015686274, g: 1, b: 0.1604328, a: 1}
   addMultiple: 0
   addMultipleCount: 5
 --- !u!1 &758677564
@@ -1279,7 +1411,8 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -69.87, y: 8.4323, z: 164.28}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
+  m_Children:
+  - {fileID: 100155033}
   m_Father: {fileID: 758677565}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1318,7 +1451,7 @@ MonoBehaviour:
   splitChance: 0
   type: 0
   allowRespawn: 1
-  notes: 
+  notes: "Splitting:\n\tSahara-WB-3-RT-1"
   displayInEditor: 1
   forceStraightLinePath: 0
   lineColor: {r: 1, g: 0.015686274, b: 0.10885512, a: 1}
@@ -1486,11 +1619,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a2bf3ee62d625c4f9ec11012b59614f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  path: {fileID: 11400000, guid: bc162719c6a2f134bb96ba456bc4a507, type: 2}
+  path: {fileID: 11400000, guid: 95c56b1388611484aa37a4ae4e1b0c2c, type: 2}
   type: 1
-  startNode: 18780
-  endNode: 22534
-  node: 9782
+  startNode: 17295
+  endNode: 20273
+  node: 4642
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -1826,7 +1959,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &996648429
 Transform:
   m_ObjectHideFlags: 0
@@ -1936,24 +2069,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nodes:
-  - {x: -66.28597, y: -0.15241748, z: 140.6755}
-  - {x: -60.880447, y: -0.15241641, z: 128.81412}
-  - {x: -48.37686, y: -0.15241319, z: 103.25361}
-  - {x: -35.380924, y: -0.15240909, z: 76.35422}
-  - {x: -15.052052, y: -0.15240443, z: 32.38548}
-  - {x: -15.864401, y: -0.15240234, z: 17.515495}
-  pathSpeedMPH: 48
+  - {x: -72.74905, y: -0.15241748, z: 154.92273}
+  - {x: -69.8521, y: -0.15241641, z: 148.24593}
+  - {x: -48.748802, y: -0.15241319, z: 103.34771}
+  - {x: -35.86994, y: -0.15240909, z: 76.38276}
+  - {x: -17.125118, y: -0.15240443, z: 38.195816}
+  - {x: -14.247634, y: -0.15240234, z: 21.671047}
+  - {x: -23.485668, y: -0.15240234, z: 11.024534}
+  - {x: -32.214745, y: -0.15240234, z: 8.91788}
+  - {x: -36.397057, y: -0.15240234, z: 10.450548}
+  pathSpeedMPH: 35
   pathName: 
   smartTraffic: 1
   pathType: 0
   bakedResolution: 1
   splitChance: 0
   type: 0
-  allowRespawn: 0
-  notes: 
+  allowRespawn: 1
+  notes: "Connecting:\n\tSahara-SB-3"
   displayInEditor: 1
   forceStraightLinePath: 0
-  lineColor: {r: 1, g: 0.015686274, b: 0.10885512, a: 1}
+  lineColor: {r: 0.015686274, g: 1, b: 0.1604328, a: 1}
   addMultiple: 0
   addMultipleCount: 3
 --- !u!1 &1107684483
@@ -2574,8 +2710,29 @@ MonoBehaviour:
   resolution: 0
   savedLocation: Assets/TrafficAssets/LVB Sahara
   paths:
+  - {fileID: 100155034}
+  - {fileID: 728309273}
+  - {fileID: 42536791}
+  - {fileID: 187530647}
+  - {fileID: 414787739}
+  - {fileID: 432633912}
   - {fileID: 527003915}
+  - {fileID: 549399019}
+  - {fileID: 629222275}
+  - {fileID: 725098245}
+  - {fileID: 819784390}
+  - {fileID: 965426171}
+  - {fileID: 1055620430}
+  - {fileID: 1133626099}
+  - {fileID: 1323946995}
   - {fileID: 1503454413}
+  - {fileID: 1506384104}
+  - {fileID: 1757973556}
+  - {fileID: 1820736968}
+  - {fileID: 1962858987}
+  - {fileID: 1964943658}
+  - {fileID: 2073550022}
+  - {fileID: 2131921258}
   doBakeWhenPlaying: 0
   exitPlayMode: 0
 --- !u!4 &1659966385

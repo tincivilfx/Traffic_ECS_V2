@@ -59,6 +59,7 @@ namespace CivilFX.TrafficECS
                 commandBuffer.AddComponent(index, instance, new VehicleBodyIndexPosition { });
                 commandBuffer.AddComponent(index, instance, new VehicleBodyPathID { value = TrafficSystem.BYTE_INVALID });
                 commandBuffer.AddComponent(index, instance, new VehicleBodyLength { value = body.length });
+                commandBuffer.AddComponent(index, instance, new VehicleBodyMaxSpeed { });
                 commandBuffer.AddComponent(index, instance, new VehicleBodySplittingPath { linkedPathID = TrafficSystem.BYTE_INVALID });
                 commandBuffer.AddComponent(index, instance, new VehicleBodyWaitingStatus { });
                 commandBuffer.DestroyEntity(index, entity);

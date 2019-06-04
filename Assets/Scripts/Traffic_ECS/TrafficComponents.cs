@@ -45,6 +45,11 @@ namespace CivilFX.TrafficECS
         public int value;
     }
 
+    public struct VehicleBodyMaxSpeed : IComponentData
+    {
+        public byte value;
+    }
+
     public struct VehicleBodyWaitingStatus : IComponentData
     {
         public bool value;
@@ -153,6 +158,7 @@ namespace CivilFX.TrafficECS
     public struct VehicleInitData
     {
         public byte pathID;
+        public byte speed;
         public int pos;
     }
 
