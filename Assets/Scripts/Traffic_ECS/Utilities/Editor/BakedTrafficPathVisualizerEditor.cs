@@ -1,7 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace CivilFX.TrafficECS
 {
@@ -105,5 +107,30 @@ namespace CivilFX.TrafficECS
             }
         }
 
+        [UnityEditor.Callbacks.OnOpenAsset(1)]
+        public static bool OnOpenAsset(int instanceID, int line)
+        {
+            var _path = EditorUtility.InstanceIDToObject(instanceID) as BakedTrafficPath;
+            if (_path)
+            {
+                var visualizers = Resources.FindObjectsOfTypeAll<BakedTrafficPathVisualizer>();
+                GameObject go;
+                if (visualizers.Length > 0)
+                {
+                    go = visualizers[0].gameObject;
+                } else
+                {
+                    go = new GameObject("PathVisualizer");
+                    go.AddComponent<BakedTrafficPathVisualizer>();
+                    
+                }
+                Selection.SetActiveObjectWithContext(go, null);
+                var script = go.GetComponent<BakedTrafficPathVisualizer>();
+
+                script.path = _path;
+                EditorSceneManager.MarkSceneDirty(go.scene);
+            }
+            return true;
+        }
     }
 }

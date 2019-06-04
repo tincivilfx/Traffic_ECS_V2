@@ -173,9 +173,10 @@ namespace CivilFX.TrafficECS {
                 var chunkMaxSpeed = chunk.GetNativeArray(bodyMaxSpeedType);
 
                 Random rand = new Random(seed);
+
                 for (int i = 0; i < chunk.Count; i++)
                 {
-                    
+
                     var idAndSpeed = chunkBodyIDAndSpeed[i];
                     var rawPosition = chunkRawPosition[i];
                     var indexPosition = chunkIndexPosition[i];
@@ -184,101 +185,61 @@ namespace CivilFX.TrafficECS {
                     var splitting = chunkSplitting[i];
                     var maxSpeed = chunkMaxSpeed[i];
 
-                    Path currentPath = new Path { id = BYTE_INVALID };
                     Path mergedPath = new Path { id = BYTE_INVALID };
-                    Path splittingPath = new Path { id = BYTE_INVALID };
                     PathLinkedData linkedData = new PathLinkedData { linkedID = BYTE_INVALID };
                     bool hasMergedPath = false;
                     bool hasSplittingPath = false;
 
                     //get the current path of this vehicle
-                    for (int j = 0; j < paths.Length; j++)
-                    {
-                        if (pathID.value == paths[j].id)
-                        {
-                            currentPath = paths[j];
-                            break;
-                        }
-                    }
-
-                    //no path found for this vehicle
-                    if (currentPath.id == BYTE_INVALID)
+                    if (!GetPathFromPaths(pathID.value, out Path currentPath, in paths))
                     {
                         continue;
                     }
+
 
                     //get mergedPath (if any)
                     if (currentPath.linkedCount > 0 && currentPath.linked[currentPath.linkedCount - 1].chance == BYTE_INVALID)
                     {
                         linkedData = currentPath.linked[currentPath.linkedCount - 1];
-                        for (int j = 0; j < paths.Length; j++)
-                        {
-                            if (linkedData.linkedID == paths[j].id)
-                            {
-                                mergedPath = paths[j];
-                                hasMergedPath = true;
-                                break;
-                            }
-                        }
+                        hasMergedPath = GetPathFromPaths(linkedData.linkedID, out mergedPath, in paths);
                     }
 
-                    //get splitting path (if any)
-                    if (splitting.linkedPathID != BYTE_INVALID)
-                    {
-                        hasSplittingPath = true;
-                        for (int j = 0; j < paths.Length; j++)
-                        {
-                            if (splitting.linkedPathID == paths[j].id)
-                            {
-                                splittingPath = paths[j];
-                                break;
-                            }
-                        }
-                    }
+                    //get split path
+                    hasSplittingPath = GetPathFromPaths(splitting.linkedPathID, out Path splitPath, in paths);
 
-                    //resolve next position
+                    /*****resolve next position*****/
                     //get front position
                     var frontPos = indexPosition.value + (length.value / 2);
 
-                    //Debug.Log(vehicleData.id + ":" + vehicleData.currentPos + ":" + vehicleData.speed + ":" + currentPath.nodesCount);
-                    if (indexPosition.value + currentPath.maxSpeed >= currentPath.nodesCount)
+                    var scanDis = MAX_SCAN_DISTANCE;
+                    var scanLeftOver = 0;
+                    
+                    if (hasSplittingPath && frontPos + scanDis > splitting.transitionNode)
                     {
-                        //Debug.Log("Reach end");
-                        //this vehicle is at the end of this path
+                        scanDis = splitting.transitionNode - frontPos;
+                        scanLeftOver = MAX_SCAN_DISTANCE - scanDis;
+                    }
+
+                    if (frontPos + scanDis >= currentPath.nodesCount)
+                    {
+                        scanDis = currentPath.nodesCount - frontPos;
+                        //there is merging path
                         if (hasMergedPath)
                         {
-                            //Debug.Log("Merging");
-                            pathID.value = mergedPath.id;
-                            indexPosition.value = linkedData.connectingNode;
-                            rawPosition.position = mergedPath.pathNodes[linkedData.connectingNode];
-                            rawPosition.lookAtPosition = mergedPath.pathNodes[linkedData.connectingNode + mergedPath.maxSpeed];
-                            maxSpeed.value = (byte)(mergedPath.maxSpeed + rand.NextInt(0, SPEED_VARIANCE));
-                        } else
-                        {
-                            pathID.value = BYTE_INVALID;
-                            indexPosition.value = -1;
-                            idAndSpeed.speed = 0;
-                            rawPosition.position = OUT_OF_WORLD_POSITION;
-                            rawPosition.lookAtPosition = OUT_OF_WORLD_POSITION;
+                            scanLeftOver = MAX_SCAN_DISTANCE - scanDis;
                         }
-                        //set
-                        chunkPathID[i] = pathID;
-                        chunkBodyIDAndSpeed[i] = idAndSpeed;
-                        chunkIndexPosition[i] = indexPosition;
-                        chunkRawPosition[i] = rawPosition;
-                        chunkMaxSpeed[i] = maxSpeed;
-                        continue;
                     }
 
                     //split to next path
                     if (hasSplittingPath && indexPosition.value >= splitting.transitionNode)
                     {
+                        var startNode = indexPosition.value - splitting.transitionNode;
                         pathID.value = splitting.linkedPathID;
-                        indexPosition.value = 0;
-                        rawPosition.position = splittingPath.pathNodes[0];
-                        rawPosition.lookAtPosition = splittingPath.pathNodes[splittingPath.maxSpeed];
-                        splitting.linkedPathID = BYTE_INVALID;
-                        maxSpeed.value = (byte)(splittingPath.maxSpeed + rand.NextInt(0, SPEED_VARIANCE));
+                        indexPosition.value = startNode;
+                        rawPosition.position = splitPath.pathNodes[startNode];
+                        rawPosition.lookAtPosition = splitPath.pathNodes[startNode + splitPath.maxSpeed];
+                        splitting.linkedPathID = BYTE_INVALID; //TODO: get next splitting
+                        maxSpeed.value = (byte)(splitPath.maxSpeed + rand.NextInt(0, SPEED_VARIANCE));
                         //set
                         chunkPathID[i] = pathID;
                         chunkBodyIDAndSpeed[i] = idAndSpeed;
@@ -289,63 +250,76 @@ namespace CivilFX.TrafficECS {
                         continue;
                     }
 
-
-
-                    //check how many nodes can this vehicle move to
-                    //i.e. : scan distance
-                    var scanDis = MAX_SCAN_DISTANCE;
-                    var scanDisLeftOver = 0;
-                    //scale scanDis;
-                    if (frontPos + scanDis > currentPath.nodesCount)
+                    //end of path
+                    if (indexPosition.value >= currentPath.nodesCount)
                     {
-                        scanDis = currentPath.nodesCount - frontPos;
-                        //there is merging path
                         if (hasMergedPath)
                         {
-                            scanDisLeftOver = MAX_SCAN_DISTANCE - scanDis;
+                            var startNode = linkedData.connectingNode + indexPosition.value - currentPath.nodesCount;
+                            pathID.value = mergedPath.id;
+                            indexPosition.value = startNode;
+                            rawPosition.position = mergedPath.pathNodes[startNode];
+                            rawPosition.lookAtPosition = mergedPath.pathNodes[startNode + mergedPath.maxSpeed];
+                            maxSpeed.value = (byte)(mergedPath.maxSpeed + rand.NextInt(0, SPEED_VARIANCE));
                         }
+                        else
+                        {
+                            pathID.value = BYTE_INVALID;
+                            indexPosition.value = 0;
+                            idAndSpeed.speed = 0;
+                            rawPosition.position = OUT_OF_WORLD_POSITION;
+                            rawPosition.lookAtPosition = OUT_OF_WORLD_POSITION;
+                        }
+
+                        //set
+                        chunkPathID[i] = pathID;
+                        chunkBodyIDAndSpeed[i] = idAndSpeed;
+                        chunkIndexPosition[i] = indexPosition;
+                        chunkRawPosition[i] = rawPosition;
+                        chunkMaxSpeed[i] = maxSpeed;
+                        continue;
                     }
 
-                    var hitDis = scanDis;
-                    var hit = false;
-                    byte lvalue = 0;
-                    for (int j = 1; j < scanDis; j++)
+                    var hitDis = MAX_SCAN_DISTANCE;
+                    byte lvalue = 0;                  
+                    //scanning
+                    for (int j=1; j<scanDis; j++)
                     {
-                        lvalue = currentPath.occupied[frontPos + j];
-                        if (CheckOccupied(lvalue, OccupiedType.Vehicle) || CheckOccupied(lvalue, OccupiedType.TrafficSignal)
-                            || CheckOccupied(lvalue, OccupiedType.YieldMerging))
+                        lvalue |= currentPath.occupied[frontPos + j];
+                        if (lvalue > 0)
                         {
                             hitDis = j;
-                            hit = true;
                             break;
                         }
                     }
 
-                    //Debug.Log(vehicleData.id + ":" + hit + ":" + hitDis + ":" + scanDisLeftOver);
-                    //if no vehicle seen on current path
-                    //we check for the merged path
-                    if (!hit && scanDisLeftOver > 0)
+                    if (lvalue == 0 && scanLeftOver != 0)
                     {
-                        var startNode = linkedData.connectingNode;
-                        while (scanDisLeftOver > 0)
+                        if (hasSplittingPath)
                         {
-                            lvalue = mergedPath.occupied[startNode];
-                            if (CheckOccupied(lvalue, OccupiedType.Vehicle) || CheckOccupied(lvalue, OccupiedType.TrafficSignal)
-                            || CheckOccupied(lvalue, OccupiedType.YieldMerging))
+                            for (int j=0; j<scanLeftOver; j++)
                             {
-                                break;
+                                lvalue |= splitPath.occupied[j];
+                                if (lvalue > 0)
+                                {
+                                    hitDis = scanDis + j;
+                                    break;
+                                }
                             }
-                            hitDis++;
-                            startNode++;
-                            scanDisLeftOver--;
+                        } else if (hasMergedPath)
+                        {
+                            for (int j = 0; j < scanLeftOver; j++)
+                            {
+                                lvalue |= mergedPath.occupied[linkedData.connectingNode + j];
+                                if (lvalue > 0)
+                                {
+                                    hitDis = scanDis + j;
+                                    break;
+                                }
+                            }
                         }
                     }
-                    
-                    //rescale hitDis to ensure vehicle move to out of path
-                    if (frontPos + length.value >= currentPath.nodesCount && !hasMergedPath)
-                    {
-                        hitDis = MAX_SCAN_DISTANCE;
-                    }
+
                     //map the speed
                     var currentSpeed = Map(hitDis, 0, MAX_SCAN_DISTANCE, 0, maxSpeed.value);
 
@@ -364,14 +338,17 @@ namespace CivilFX.TrafficECS {
                     //set current speed
                     idAndSpeed.speed = currentSpeed;
                     indexPosition.value = indexPosition.value + (int)currentSpeed;
-                    rawPosition.position = currentPath.pathNodes[indexPosition.value];
-                    rawPosition.lookAtPosition = indexPosition.value < currentPath.nodesCount - currentPath.maxSpeed ? currentPath.pathNodes[indexPosition.value + currentPath.maxSpeed] : rawPosition.position;
-
+                    if (indexPosition.value < currentPath.nodesCount)
+                    {
+                        rawPosition.position = currentPath.pathNodes[indexPosition.value];
+                        rawPosition.lookAtPosition = indexPosition.value < currentPath.nodesCount - currentPath.maxSpeed ? currentPath.pathNodes[indexPosition.value + currentPath.maxSpeed] : rawPosition.position;
+                    }
                     //assign value back
                     chunkBodyIDAndSpeed[i] = idAndSpeed;
                     chunkRawPosition[i] = rawPosition;
                     chunkIndexPosition[i] = indexPosition;
-                }
+
+                }           
             }
         }
 

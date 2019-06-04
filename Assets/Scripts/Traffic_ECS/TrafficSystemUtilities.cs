@@ -1,4 +1,5 @@
-﻿using Unity.Mathematics;
+﻿using Unity.Collections;
+using Unity.Mathematics;
 
 namespace CivilFX.TrafficECS
 {
@@ -83,6 +84,22 @@ namespace CivilFX.TrafficECS
             return true;
         }
 
-
+        public static bool GetPathFromPaths(int pathID, out Path result, in NativeArray<Path> collection)
+        {
+            result = Path.Null;
+            if (pathID == BYTE_INVALID)
+            {
+                return false;
+            }
+            for (int i=0; i<collection.Length; i++)
+            {
+                if (pathID == collection[i].id)
+                {
+                    result = collection[i];
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }
