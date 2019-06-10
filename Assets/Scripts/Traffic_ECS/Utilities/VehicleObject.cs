@@ -16,6 +16,6 @@ namespace CivilFX.TrafficECS
         public GameObject body;
         public int bodyLength;
         public GameObject[] wheels;
-        public VehicleType type;
+        public VehicleType type = VehicleType.Medium;
     }
 }

@@ -129,8 +129,9 @@ namespace CivilFX.TrafficECS
 
                 script.path = _path;
                 EditorSceneManager.MarkSceneDirty(go.scene);
+                return true;
             }
-            return true;
+            return false;
         }
     }
 }
