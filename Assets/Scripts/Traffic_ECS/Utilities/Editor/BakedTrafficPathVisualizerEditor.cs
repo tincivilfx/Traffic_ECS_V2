@@ -79,6 +79,11 @@ namespace CivilFX.TrafficECS
                     so.FindProperty("endNode").intValue = end;
                     break;
             }
+
+
+            sp = so.FindProperty("showDependencies");
+            EditorGUILayout.PropertyField(sp);
+
             so.ApplyModifiedProperties();
         }
 
@@ -101,9 +106,7 @@ namespace CivilFX.TrafficECS
                         Handles.PositionHandle(path.PathNodes[end], Quaternion.identity);
                         Handles.ArrowHandleCap(0, path.PathNodes[end] + new Vector3(0f, 1.1f, 0f), Quaternion.LookRotation(-Vector3.up), 1.0f, EventType.Repaint);
                         break;
-
                 }
-
             }
         }
 
@@ -127,8 +130,11 @@ namespace CivilFX.TrafficECS
                 Selection.SetActiveObjectWithContext(go, null);
                 var script = go.GetComponent<BakedTrafficPathVisualizer>();
 
-                script.path = _path;
-                EditorSceneManager.MarkSceneDirty(go.scene);
+                var so = new SerializedObject(script);
+                so.Update();
+                so.FindProperty("path").objectReferenceValue = _path;
+                so.FindProperty("showDependencies").boolValue = false;
+                so.ApplyModifiedProperties();
                 return true;
             }
             return false;

@@ -417,11 +417,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a2bf3ee62d625c4f9ec11012b59614f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  path: {fileID: 11400000, guid: 07787eb7a5ea2fd4bbb1b9e7e2cefe8f, type: 2}
+  path: {fileID: 11400000, guid: 498d6c15a3fd1d245826a242fdbda5a6, type: 2}
   type: 1
-  startNode: 30000
-  endNode: 32800
+  startNode: 0
+  endNode: 18192
   node: 0
+  showDependencies: 0
 --- !u!4 &370475870
 Transform:
   m_ObjectHideFlags: 0

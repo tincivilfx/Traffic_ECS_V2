@@ -6,6 +6,16 @@ namespace CivilFX.TrafficECS
 {
     public class BakedTrafficPathVisualizer : MonoBehaviour
     {
+        internal class VisualizedData
+        {
+            public BakedTrafficPath path;
+            public VisualizedType type;
+            public int startNode;
+            public int endNode;
+            public int node;
+        }
+
+
         public enum VisualizedType
         {
             SingleNode,
@@ -18,5 +28,10 @@ namespace CivilFX.TrafficECS
         public int startNode;
         public int endNode;
         public int node;
+        public bool showDependencies;
+
+
+
+
     }
 }
